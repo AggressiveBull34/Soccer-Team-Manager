@@ -1,0 +1,18 @@
+{
+  "id": "./",
+  "name": "Soccer Sub Manager",
+  "short_name": "Sub Manager",
+  "description": "Sideline lineups, substitutions and playing time for youth soccer coaches.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f7f4ea",
+  "theme_color": "#24552f",
+  "categories": ["sports", "productivity"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

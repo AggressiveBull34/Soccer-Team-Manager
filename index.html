@@ -1,0 +1,3815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Soccer Sub Manager</title>
+  <meta name="description" content="Sideline lineups, substitutions and playing time for youth soccer coaches." />
+  <meta name="theme-color" content="#24552f" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Sub Manager" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f4ea;
+      --surface: #fffdf8;
+      --surface-2: #f1eee4;
+      --text: #183026;
+      --muted: #66756b;
+      --primary: #2f6b3c;
+      --primary-strong: #24552f;
+      --secondary: #3e8a57;
+      --field: #2d8c52;
+      --field-dark: #237244;
+      --accent: #e9b949;
+      --accent-soft: rgba(233, 185, 73, 0.2);
+      --border: #d9dfd0;
+      --danger: #a44f4a;
+      --jersey-fwd: #d9483b;
+      --jersey-mid: #e9b949;
+      --jersey-def: #2f5fb3;
+      --jersey-gk: #7bc043;
+      --shadow-sm: 0 6px 16px rgba(24, 48, 38, 0.08);
+      --shadow-md: 0 12px 28px rgba(24, 48, 38, 0.12);
+      --radius-sm: 14px;
+      --radius-md: 18px;
+      --radius-lg: 24px;
+      --transition: 180ms ease;
+    }
+
+    [data-theme="dark"] {
+      --bg: #132019;
+      --surface: #1b2c23;
+      --surface-2: #24382d;
+      --text: #eef6ef;
+      --muted: #b6c6b9;
+      --primary: #78c78d;
+      --primary-strong: #5fb276;
+      --secondary: #54a76f;
+      --field: #256b42;
+      --field-dark: #1d5635;
+      --accent: #f0c75b;
+      --accent-soft: rgba(240, 199, 91, 0.22);
+      --border: rgba(230, 241, 232, 0.12);
+      --danger: #d27e77;
+      --shadow-sm: 0 6px 16px rgba(0, 0, 0, 0.22);
+      --shadow-md: 0 12px 28px rgba(0, 0, 0, 0.28);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: 'Work Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: radial-gradient(circle at top, rgba(233,185,73,0.08), transparent 28%), var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    button, input, select { font: inherit; }
+    button {
+      border: none;
+      cursor: pointer;
+      transition: transform var(--transition), background var(--transition), color var(--transition), border-color var(--transition), box-shadow var(--transition), opacity var(--transition);
+    }
+    button:active { transform: translateY(1px) scale(0.99); }
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: max(16px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) 16px max(18px, env(safe-area-inset-left));
+      background: linear-gradient(135deg, var(--primary-strong), var(--primary));
+      color: #fff;
+      box-shadow: var(--shadow-md);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.25);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .brand p {
+      margin: 2px 0 0;
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.8);
+    }
+    .theme-toggle {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.24);
+      display: grid;
+      place-items: center;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .roster-row {
+      display: grid;
+      grid-template-columns: 34px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+    }
+    .roster-num {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .roster-name {
+      font-weight: 700;
+      color: var(--text);
+      overflow-wrap: anywhere;
+    }
+    .roster-delete {
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      min-height: 40px;
+    }
+    .roster-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .roster-form input {
+      flex: 1 1 200px;
+      min-height: 46px;
+      padding: 10px 14px;
+      font: inherit;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+    .roster-form input:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+    .roster-message {
+      display: none;
+      margin: 0 0 12px !important;
+      font-weight: 600;
+      color: var(--primary) !important;
+    }
+    .roster-message.error {
+      color: #b3261e !important;
+    }
+    .guide-note {
+      display: none;
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      background: rgba(233, 185, 73, 0.16);
+      border: 1px solid rgba(233, 185, 73, 0.55);
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .team-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .team-bar select, .team-name-row input, .bulk-input {
+      font: inherit;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+    .team-bar select {
+      flex: 1 1 200px;
+      min-height: 46px;
+      padding: 10px 12px;
+      font-weight: 700;
+    }
+    .team-name-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .team-name-row input {
+      flex: 1 1 200px;
+      min-height: 46px;
+      padding: 10px 14px;
+      font-weight: 700;
+    }
+    .bulk-input {
+      width: 100%;
+      min-height: 120px;
+      padding: 12px 14px;
+      resize: vertical;
+      line-height: 1.45;
+      margin-bottom: 10px;
+    }
+    .team-bar select:focus, .team-name-row input:focus, .bulk-input:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+    .field-label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 6px;
+    }
+    .team-section + .team-section {
+      margin-top: 16px;
+    }
+    .danger-zone {
+      border-color: rgba(179, 38, 30, 0.35) !important;
+    }
+    .danger-zone h3 { color: #b3261e; }
+
+    /* ---------- Level + formation ---------- */
+    .level-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .level-card {
+      text-align: left;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-height: 92px;
+    }
+    .level-card strong {
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .level-card strong em {
+      font-style: normal;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-left: 4px;
+    }
+    .level-card .level-players {
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .level-card small {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+    .level-card.selected {
+      border-color: var(--accent);
+      background: linear-gradient(180deg, rgba(233,185,73,0.16), rgba(233,185,73,0.04));
+      box-shadow: 0 0 0 4px var(--accent-soft), var(--shadow-md);
+    }
+    .formation-intro {
+      margin: 0 0 14px;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      background: var(--surface-2);
+      border-left: 4px solid var(--accent);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+    .formation-head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .formation-count {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+    .formation-count.complete {
+      color: var(--primary);
+      border-color: rgba(62,138,87,0.4);
+    }
+    .preset-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .preset-btn {
+      min-height: 40px;
+      padding: 8px 14px;
+      font-size: 0.88rem;
+    }
+    .preset-btn.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .field.picker {
+      min-height: 470px;
+      max-width: 540px;
+      margin: 0 auto;
+    }
+    .pick-chip {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: 78px;
+      padding: 4px 2px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      color: #fff;
+      border-radius: 14px;
+    }
+    .pick-chip .jersey {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px 14px 10px 10px;
+      border: 2px dashed rgba(255,255,255,0.75);
+      background: rgba(255,255,255,0.10);
+      font-weight: 800;
+      font-size: 1.15rem;
+    }
+    .pick-chip .pick-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      line-height: 1.15;
+      text-align: center;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    }
+    .pick-chip.on .jersey {
+      border-style: solid;
+      border-color: #fff;
+      color: #fff;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+    }
+    .pick-chip.on.g-fwd .jersey { background: var(--jersey-fwd); }
+    .pick-chip.on.g-mid .jersey { background: var(--jersey-mid); color: #2d240d; }
+    .pick-chip.on.g-def .jersey { background: var(--jersey-def); }
+    .pick-chip.on.g-gk .jersey { background: var(--jersey-gk); color: #183026; }
+    .pick-chip.off .pick-label { opacity: 0.8; }
+    .pick-chip:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .pick-chip:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .formation-summary {
+      display: grid;
+      gap: 6px;
+      margin-top: 14px;
+      font-size: 0.9rem;
+    }
+    .formation-summary div {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      gap: 8px;
+    }
+    .formation-summary b { color: var(--muted); font-weight: 700; }
+    .formation-message {
+      display: none;
+      margin: 10px 0 0;
+      font-weight: 600;
+      color: #b3261e;
+      font-size: 0.9rem;
+    }
+
+    .container {
+      width: min(1100px, 100%);
+      margin: 0 auto;
+      padding: 18px 14px 34px;
+    }
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 8px 0 18px;
+    }
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      box-shadow: var(--shadow-sm);
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+    .step.active {
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+      color: var(--text);
+      border-color: rgba(47,107,60,0.32);
+      box-shadow: 0 0 0 3px rgba(47,107,60,0.10), var(--shadow-sm);
+    }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .hero-card, .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+    }
+    .hero-card {
+      padding: 22px 18px;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+    .hero-card h2 {
+      margin: 0 0 8px;
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+    .hero-card p { margin: 0; color: var(--muted); }
+    .toolbar, .footer-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .toolbar { justify-content: space-between; margin-bottom: 14px; }
+    .pill-stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      border-radius: 999px;
+      box-shadow: var(--shadow-sm);
+      font-weight: 700;
+    }
+    .pill-stat span { color: var(--primary); }
+    .grid.players {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(142px, 1fr));
+      gap: 12px;
+    }
+    .player-card, .player-chip, .swap-card {
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow-sm);
+    }
+    .player-card {
+      min-height: 96px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.98rem;
+    }
+    .player-card small {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .player-card.selected, .player-chip.selected, .position-slot.selected, .swap-card.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-soft), var(--shadow-md);
+    }
+    .player-card.available {
+      background: linear-gradient(180deg, rgba(62,138,87,0.14), rgba(62,138,87,0.05));
+      border-color: rgba(62,138,87,0.34);
+    }
+    .player-card.unavailable {
+      opacity: 0.6;
+      filter: grayscale(0.08);
+      background: linear-gradient(180deg, rgba(102,117,107,0.10), rgba(102,117,107,0.04));
+    }
+    .btn {
+      min-height: 48px;
+      padding: 12px 18px;
+      border-radius: 999px;
+      font-weight: 700;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid transparent;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: #fff;
+    }
+    .btn-primary:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    .btn-accent {
+      background: var(--accent);
+      color: #2d240d;
+    }
+    .btn-danger {
+      background: rgba(164,79,74,0.12);
+      color: var(--danger);
+      border-color: rgba(164,79,74,0.25);
+    }
+    .layout-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .panel {
+      padding: 16px;
+    }
+    .panel h3, .panel h4 {
+      margin: 0 0 10px;
+      font-size: 1.04rem;
+      letter-spacing: -0.02em;
+    }
+    .panel p.note {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .panel-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .panel-head h3 { margin: 0; }
+    .field {
+      position: relative;
+      overflow: hidden;
+      border-radius: 28px;
+      min-height: 600px;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.08), transparent 22%),
+        repeating-linear-gradient(
+          180deg,
+          rgba(255,255,255,0.03) 0,
+          rgba(255,255,255,0.03) 52px,
+          rgba(0,0,0,0.02) 52px,
+          rgba(0,0,0,0.02) 104px
+        ),
+        linear-gradient(180deg, var(--field), var(--field-dark));
+      border: 4px solid rgba(255,255,255,0.72);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), var(--shadow-md);
+      padding: 18px 14px;
+    }
+    .field::before, .field::after {
+      content: "";
+      position: absolute;
+      inset: 14px;
+      border: 3px solid rgba(255,255,255,0.86);
+      border-radius: 20px;
+      pointer-events: none;
+    }
+    .field::after {
+      inset: 50% 14px auto 14px;
+      top: calc(50% - 1.5px);
+      height: 0;
+      border: none;
+      border-top: 3px solid rgba(255,255,255,0.86);
+      border-radius: 0;
+    }
+    .center-circle {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 3px solid rgba(255,255,255,0.86);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .goal-box.top, .goal-box.bottom {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(56%, 330px);
+      height: 82px;
+      border: 3px solid rgba(255,255,255,0.86);
+      border-radius: 0 0 22px 22px;
+      border-top: none;
+      pointer-events: none;
+    }
+    .goal-box.top {
+      top: 14px;
+      border-radius: 22px 22px 0 0;
+      border-top: 3px solid rgba(255,255,255,0.86);
+      border-bottom: none;
+    }
+    .goal-box.bottom {
+      bottom: 14px;
+    }
+    .position-slot {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: min(28vw, 180px);
+      min-width: 132px;
+      min-height: 92px;
+      border-radius: 22px;
+      border: 2px dashed rgba(255,255,255,0.68);
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(3px);
+      color: #fff;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      text-align: center;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition), border-color var(--transition);
+    }
+    .position-slot strong {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.92;
+    }
+    .position-slot .pos-short { display: none; }
+    .position-slot .slot-name {
+      font-weight: 800;
+      line-height: 1.15;
+      font-size: 0.97rem;
+    }
+    .position-slot.empty .slot-name {
+      font-size: 0.86rem;
+      font-weight: 600;
+      opacity: 0.85;
+    }
+    .position-slot.filled {
+      border-style: solid;
+      background: rgba(12, 35, 17, 0.22);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.15);
+    }
+    .position-slot.selected-off {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 5px var(--accent-soft), 0 12px 24px rgba(0,0,0,0.16);
+      background: rgba(233,185,73,0.18);
+    }
+    .position-slot.pending {
+      border-color: #fff;
+      background: rgba(255,255,255,0.2);
+    }
+    .position-slot .tiny {
+      font-size: 0.73rem;
+      opacity: 0.88;
+    }
+    /* Formations with 4 across a row need narrower slots */
+    .field.dense .position-slot {
+      width: 22%;
+      min-width: 0;
+      max-width: 160px;
+      padding: 8px 4px;
+      border-radius: 18px;
+    }
+    .field.dense .position-slot strong { letter-spacing: 0.03em; }
+    .field-empty {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 40px;
+      color: #fff;
+      font-weight: 700;
+      text-align: center;
+    }
+    .bench-list, .assignable-players, .pending-list, .history-list {
+      display: grid;
+      gap: 10px;
+    }
+    .player-chip {
+      min-height: 52px;
+      width: 100%;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 700;
+      text-align: left;
+    }
+    .player-chip small { color: var(--muted); font-size: 0.78rem; font-weight: 600; }
+    .player-chip.bench {
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+    }
+    .player-chip.bench:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .player-chip.field-chip {
+      background: linear-gradient(180deg, rgba(62,138,87,0.15), rgba(62,138,87,0.05));
+    }
+    .sub-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .stat-card {
+      padding: 14px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-card label {
+      display: block;
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-bottom: 5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .stat-card strong {
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+    .stat-card .stat-sub {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .swap-card {
+      padding: 12px;
+      background: linear-gradient(180deg, rgba(233,185,73,0.16), rgba(233,185,73,0.05));
+    }
+    .swap-card header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 8px;
+      font-weight: 800;
+    }
+    .swap-card p {
+      margin: 0;
+      color: var(--text);
+      font-size: 0.93rem;
+      line-height: 1.35;
+    }
+    .swap-card .remove {
+      min-width: 42px;
+      min-height: 42px;
+      border-radius: 12px;
+      background: rgba(164,79,74,0.12);
+      color: var(--danger);
+    }
+    .history-item {
+      padding: 12px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+      border: 1px solid var(--border);
+    }
+    .history-item strong {
+      display: inline-block;
+      margin-bottom: 6px;
+    }
+    .empty-state {
+      padding: 14px;
+      border-radius: var(--radius-md);
+      border: 1px dashed var(--border);
+      color: var(--muted);
+      background: rgba(255,255,255,0.2);
+      text-align: center;
+    }
+    .selected-pair {
+      margin: 12px 0;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(62,138,87,0.12), rgba(62,138,87,0.04));
+      border: 1px solid rgba(62,138,87,0.2);
+    }
+    .selected-pair strong { display: block; margin-bottom: 4px; }
+    .muted { color: var(--muted); }
+    .danger { color: var(--danger); }
+    .accent { color: var(--primary); }
+    .lineup-wrap {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    /* ---------- Full-screen play board ---------- */
+    .board-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+    .board-overlay[hidden] { display: none; }
+    .board-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      padding: max(10px, env(safe-area-inset-top)) 12px 10px;
+      background: linear-gradient(135deg, var(--primary-strong), var(--primary));
+      color: #fff;
+      box-shadow: var(--shadow-md);
+    }
+    .board-bar .btn-back {
+      background: #fff;
+      color: #24552f;
+      min-height: 44px;
+      padding: 10px 16px;
+    }
+    .board-title {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+      margin-right: auto;
+      padding: 0 4px;
+    }
+    .board-title strong { font-size: 1rem; }
+    .board-title small { font-size: 0.78rem; opacity: 0.85; font-weight: 600; }
+    .tool-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.14);
+    }
+    .tool-btn {
+      min-height: 38px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: transparent;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.86rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tool-btn.active {
+      background: #fff;
+      color: #24552f;
+    }
+    .tool-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .swatch {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.7);
+      padding: 0;
+    }
+    .swatch.active { box-shadow: 0 0 0 3px #fff; border-color: #24552f; }
+    .board-stage {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 10px max(10px, env(safe-area-inset-bottom));
+    }
+    .field.board-field {
+      min-height: 0;
+      height: 100%;
+      aspect-ratio: 2 / 3;
+      max-width: 100%;
+      padding: 0;
+    }
+    .board-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 5;
+      touch-action: none;
+      cursor: crosshair;
+    }
+    .board-token {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      z-index: 3;
+      width: 92px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      pointer-events: none;
+    }
+    .board-token .dot {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      border: 3px solid #fff;
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.82rem;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.3);
+    }
+    .board-token.g-fwd .dot { background: var(--jersey-fwd); }
+    .board-token.g-mid .dot { background: var(--jersey-mid); color: #2d240d; }
+    .board-token.g-def .dot { background: var(--jersey-def); }
+    .board-token.g-gk .dot { background: var(--jersey-gk); color: #183026; }
+    .board-token.open .dot {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      border-style: dashed;
+    }
+    .board-token .name {
+      max-width: 100%;
+      padding: 2px 6px;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.32);
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 800;
+      line-height: 1.15;
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+
+    /* ---------- Install / update banner ---------- */
+    .app-banner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 14px;
+      margin: 0 0 16px;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(180deg, rgba(233,185,73,0.18), rgba(233,185,73,0.06));
+      border: 1px solid rgba(233,185,73,0.55);
+    }
+    .app-banner[hidden] { display: none; }
+    .app-banner .banner-text { flex: 1 1 260px; display: grid; gap: 2px; }
+    .app-banner .banner-text span { color: var(--muted); font-size: 0.9rem; }
+    .app-banner .btn { min-height: 42px; padding: 8px 16px; }
+    .app-version { margin: 18px 0 0; text-align: center; color: var(--muted); font-size: 0.78rem; }
+
+    /* ---------- Playing time, history, backup ---------- */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      white-space: nowrap;
+      background: var(--surface-2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .chip.ok { background: rgba(62,138,87,0.14); color: var(--primary); border-color: rgba(62,138,87,0.35); }
+    .chip.warn { background: rgba(233,185,73,0.2); color: #8a6200; border-color: rgba(233,185,73,0.6); }
+    [data-theme="dark"] .chip.warn { color: var(--accent); }
+    .time-list { display: grid; gap: 8px; }
+    .time-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 4px 10px;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+      border: 1px solid var(--border);
+    }
+    .time-row .who { font-weight: 700; overflow-wrap: anywhere; }
+    .time-row .who small { color: var(--muted); font-weight: 600; margin-left: 6px; }
+    .time-row .secs { font-weight: 800; font-variant-numeric: tabular-nums; }
+    .time-row .meta { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; }
+    .bar {
+      flex: 1;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      position: relative;
+    }
+    .bar span {
+      position: absolute;
+      inset: 0 auto 0 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--secondary), var(--primary));
+    }
+    .bar.low span { background: var(--accent); }
+    .game-card {
+      width: 100%;
+      text-align: left;
+      padding: 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+      color: var(--text);
+      box-shadow: var(--shadow-sm);
+      display: grid;
+      gap: 6px;
+    }
+    .game-card .row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+    .game-card strong { font-size: 1rem; }
+    .game-card .muted { font-size: 0.86rem; }
+    .season-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .season-table th, .season-table td { padding: 8px 6px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
+    .season-table th { color: var(--muted); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .season-table td.num, .season-table th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .season-table .bar { min-width: 60px; }
+    .table-scroll { overflow-x: auto; }
+    .detail-grid { display: grid; gap: 16px; }
+    .lineup-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+    .lineup-list li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; border-radius: 12px; background: var(--surface-2); }
+    .lineup-list li b { color: var(--muted); font-weight: 700; font-size: 0.86rem; }
+    .data-status { display: grid; gap: 4px; margin: 0 0 14px; font-size: 0.9rem; color: var(--muted); }
+    .data-status strong { color: var(--text); }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: rgba(10, 20, 14, 0.55);
+    }
+    .modal-backdrop[hidden] { display: none; }
+    .modal {
+      width: min(460px, 100%);
+      padding: 20px;
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+    }
+    .modal h3 { margin: 0 0 8px; font-size: 1.15rem; }
+    .modal p { margin: 0 0 10px; color: var(--muted); line-height: 1.45; }
+    .modal-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; margin-top: 14px; }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: max(20px, env(safe-area-inset-bottom));
+      z-index: 300;
+      transform: translate(-50%, 20px);
+      max-width: calc(100% - 32px);
+      padding: 12px 18px;
+      border-radius: 999px;
+      background: #183026;
+      color: #fff;
+      font-weight: 700;
+      box-shadow: var(--shadow-md);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 200ms ease, transform 200ms ease;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .toast.error { background: #a44f4a; }
+
+    @media (min-width: 860px) {
+      .detail-grid.two { grid-template-columns: 1fr 1fr; }
+      .layout-grid {
+        grid-template-columns: minmax(300px, 360px) 1fr;
+        align-items: start;
+      }
+      .lineup-wrap {
+        grid-template-columns: minmax(300px, 360px) 1fr;
+        align-items: start;
+      }
+      .sub-stats {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .container { padding: 14px 10px 28px; }
+      .field { min-height: 620px; }
+      .position-slot {
+        min-width: 108px;
+        width: 29vw;
+        min-height: 84px;
+        padding: 8px 6px;
+      }
+      .position-slot strong { font-size: 0.68rem; }
+      .position-slot .slot-name { font-size: 0.84rem; }
+      .field.dense .pos-full { display: none; }
+      .field.dense .pos-short { display: inline; }
+      .field.dense .position-slot strong { font-size: 0.74rem; }
+      .field.dense .position-slot .slot-name { font-size: 0.74rem; overflow-wrap: anywhere; }
+      .sub-stats { grid-template-columns: 1fr 1fr; }
+      .steps { gap: 8px; }
+      .step { padding: 10px 4px; font-size: 0.74rem; }
+      .formation-summary div { grid-template-columns: 110px 1fr; }
+      .board-title { display: none; }
+      .tool-btn { padding: 6px 10px; font-size: 0.8rem; }
+    }
+    @media (max-width: 470px) {
+      .position-slot {
+        min-width: 82px;
+        width: 26vw;
+        padding: 8px 4px;
+        border-radius: 18px;
+      }
+      .position-slot strong {
+        font-size: 0.58rem;
+        letter-spacing: 0.02em;
+        line-height: 1.15;
+        overflow-wrap: anywhere;
+      }
+      .position-slot .slot-name { font-size: 0.74rem; overflow-wrap: anywhere; }
+      .position-slot .tiny { font-size: 0.58rem; }
+      .field.dense .position-slot .tiny { display: none; }
+      .pick-chip { width: 70px; }
+      .pick-chip .jersey { width: 40px; height: 40px; font-size: 1rem; }
+      .pick-chip .pick-label { font-size: 0.64rem; }
+      .board-token { width: 78px; }
+      .board-token .dot { width: 38px; height: 38px; font-size: 0.72rem; }
+      .board-token .name { font-size: 0.7rem; padding: 2px 4px; }
+      .swatch { width: 26px; height: 26px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M12 3v6l4 3"></path>
+            <path d="M8 19l1.8-4.2"></path>
+            <path d="M16 19l-1.8-4.2"></path>
+          </svg>
+        </div>
+        <div>
+          <h1>Soccer Sub Manager</h1>
+          <p id="headerTeamName">Sideline lineup and substitution tool</p>
+        </div>
+      </div>
+      <div class="header-actions">
+      <button class="theme-toggle" id="historyBtn" aria-label="Game history" title="Game history">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+          <path d="M3 4v4h4"></path>
+          <path d="M12 7v5l3 2"></path>
+        </svg>
+      </button>
+      <button class="theme-toggle" id="rosterBtn" aria-label="Team and roster" title="Team and roster">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path>
+        </svg>
+      </button>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <svg id="themeIcon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="app-banner" id="updateBanner" hidden role="status">
+        <div class="banner-text"><strong>A new version is ready</strong><span>Your teams, history and any game in progress are kept.</span></div>
+        <button class="btn btn-primary" id="updateReloadBtn" type="button">Update Now</button>
+      </div>
+      <div class="app-banner" id="installBanner" hidden>
+        <div class="banner-text"><strong>Install Sub Manager on this tablet</strong><span id="installText"></span></div>
+        <button class="btn btn-primary" id="installBtn" type="button" hidden>Install App</button>
+        <button class="btn btn-secondary" id="installDismissBtn" type="button">Not now</button>
+      </div>
+      <section class="steps" aria-label="App steps">
+        <div class="step active" data-step-indicator="team">1. Team</div>
+        <div class="step" data-step-indicator="setup">2. Available</div>
+        <div class="step" data-step-indicator="lineup">3. Lineup</div>
+        <div class="step" data-step-indicator="game">4. Game</div>
+      </section>
+
+      <section class="screen" id="screen-setup">
+        <div class="hero-card">
+          <h2>Game Setup</h2>
+          <p id="setupHeroText">Tap players to mark who is available today.</p>
+        </div>
+
+        <div class="toolbar">
+          <div class="pill-stat">Selected: <span id="selectedCount">0</span> / <span id="rosterTotal">0</span></div>
+          <button class="btn btn-secondary" id="selectAllBtn">Select All</button>
+        </div>
+
+        <div class="grid players" id="setupPlayers"></div>
+
+        <div class="guide-note" id="setupWarning"></div>
+
+        <div class="footer-actions" style="margin-top:16px; justify-content:center;">
+          <button class="btn btn-secondary" id="backToTeamBtn" type="button">← Team</button>
+          <button class="btn btn-primary" id="toLineupBtn" disabled>Continue to Lineup →</button>
+        </div>
+      </section>
+
+      <section class="screen active" id="screen-team">
+        <div class="hero-card">
+          <h2>Your Team</h2>
+          <p>Pick a team or create a new one, choose its level and formation, then add players. Everything is saved on this device per team, so any coach can set up their own.</p>
+        </div>
+
+        <div class="panel team-section">
+          <h3>Team</h3>
+          <label class="field-label" for="teamSelect">Saved teams</label>
+          <div class="team-bar">
+            <select id="teamSelect" aria-label="Choose a team"></select>
+            <button class="btn btn-secondary" id="newTeamBtn" type="button">+ New Team</button>
+          </div>
+          <label class="field-label" for="teamNameInput">Team name</label>
+          <div class="team-name-row">
+            <input id="teamNameInput" type="text" placeholder="e.g. U10 Girls Blue" autocomplete="off" />
+            <button class="btn btn-secondary" id="renameTeamBtn" type="button">Save Name</button>
+          </div>
+        </div>
+
+        <div class="panel team-section">
+          <h3>Level &amp; Formation</h3>
+          <span class="field-label">Level</span>
+          <div class="level-grid" id="levelGrid" role="group" aria-label="Game level"></div>
+
+          <span class="field-label">Formation</span>
+          <p class="formation-intro">Formations are the designations of the players’ spots on the field. Some formations are better to attack offensively, others could be useful to defend or hold onto a lead, and others could be balanced. That means the team can be in a position to either score or defend. There are up to 11 positions in soccer.</p>
+
+          <div class="formation-head">
+            <div class="muted" style="font-size:0.9rem;">Tap jerseys to choose the positions this team uses, or start from a preset.</div>
+            <div class="formation-count" id="formationCount">0 / 7 positions</div>
+          </div>
+          <div class="preset-row" id="presetRow"></div>
+
+          <div class="field picker" id="formationPicker">
+            <div class="center-circle"></div>
+            <div class="goal-box top"></div>
+            <div class="goal-box bottom"></div>
+          </div>
+
+          <p class="formation-message" id="formationMessage"></p>
+          <div class="formation-summary" id="formationSummary"></div>
+          <div class="guide-note" id="formationWarning"></div>
+        </div>
+
+        <div class="panel team-section">
+          <h3>Players (<span id="rosterCount">0</span>)</h3>
+          <p class="note">Add one player at a time, or paste a whole list below. Removing a player also takes her out of today's lineup.</p>
+          <div class="roster-form">
+            <input id="newPlayerInput" type="text" placeholder="Player full name" autocomplete="off" />
+            <button class="btn btn-primary" id="addPlayerBtn" type="button">Add Player</button>
+          </div>
+          <details style="margin-bottom:12px;">
+            <summary style="cursor:pointer; font-weight:700; padding:6px 0;">Add several players at once</summary>
+            <p class="note" style="margin-top:8px;">Type or paste one name per line (commas work too).</p>
+            <textarea id="bulkInput" class="bulk-input" placeholder="Player One&#10;Player Two&#10;Player Three"></textarea>
+            <button class="btn btn-primary" id="bulkAddBtn" type="button">Add All Players</button>
+          </details>
+          <p class="note roster-message" id="rosterMessage"></p>
+          <div id="rosterList"></div>
+        </div>
+
+        <div class="panel team-section">
+          <h3>Game History &amp; Backup</h3>
+          <div class="data-status" id="dataStatus"></div>
+          <div class="footer-actions">
+            <button class="btn btn-secondary" id="viewHistoryBtn" type="button">View Game History</button>
+            <button class="btn btn-primary" id="backupBtn" type="button">⬇ Back Up All Teams</button>
+            <button class="btn btn-secondary" id="restoreBtn" type="button">⬆ Restore from Backup</button>
+            <button class="btn btn-secondary" id="shareTeamBtn" type="button">Share This Team</button>
+          </div>
+          <input type="file" id="restoreInput" accept=".json,application/json" hidden />
+          <div class="guide-note" id="backupReminder"></div>
+        </div>
+
+        <div class="panel team-section danger-zone">
+          <h3>Start Over</h3>
+          <p class="note">Clear players to build a brand new roster, or delete teams you no longer need. These can't be undone.</p>
+          <div class="footer-actions">
+            <button class="btn btn-danger" id="clearPlayersBtn" type="button">Remove All Players</button>
+            <button class="btn btn-danger" id="deleteTeamBtn" type="button">Delete This Team</button>
+            <button class="btn btn-danger" id="deleteAllTeamsBtn" type="button">Delete All Teams</button>
+          </div>
+        </div>
+
+        <div class="guide-note" id="teamWarning"></div>
+        <div class="footer-actions" style="margin-top:16px; justify-content:center;">
+          <button class="btn btn-primary" id="toSetupBtn" type="button">Continue to Availability →</button>
+        </div>
+        <p class="app-version" id="appVersion"></p>
+      </section>
+
+      <section class="screen" id="screen-lineup">
+        <div class="hero-card">
+          <h2>Build Starting Lineup</h2>
+          <p>Tap a player on the left, then tap a field position to assign her as a starter.</p>
+        </div>
+
+        <div class="lineup-wrap">
+          <div class="panel">
+            <h3>Available Players</h3>
+            <p class="note" id="lineupNote">Assigned players disappear from this list. Bench players are whoever remains once every position is filled.</p>
+            <div class="assignable-players" id="lineupPlayers"></div>
+            <div class="selected-pair" id="lineupSelectionBox" style="display:none;"></div>
+            <div class="guide-note" id="lineupWarning"></div>
+            <div class="footer-actions" style="margin-top:14px;">
+              <button class="btn btn-secondary" id="backToSetupBtn">← Back</button>
+              <button class="btn btn-primary" id="startGameBtn" disabled>Start Game →</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3>Starting Field</h3>
+            <p class="note" id="lineupFormationNote">Formation</p>
+            <div class="field" id="lineupField">
+              <div class="center-circle"></div>
+              <div class="goal-box top"></div>
+              <div class="goal-box bottom"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-game">
+        <div class="hero-card">
+          <h2>Live Game</h2>
+          <p>Select a field player to come off (or an open spot to fill), then a bench player to come on. Add as many swaps as you need and confirm them together.</p>
+        </div>
+
+        <div class="sub-stats">
+          <div class="stat-card">
+            <label>Game Clock</label>
+            <strong id="clockDisplay">00:00</strong>
+            <div class="stat-sub" id="clockFormat"></div>
+          </div>
+          <div class="stat-card">
+            <label>Pending Subs</label>
+            <strong id="roundCount">0</strong>
+          </div>
+          <div class="stat-card">
+            <label>Total Swaps Made</label>
+            <strong id="totalSwapsDisplay">0</strong>
+          </div>
+          <div class="stat-card">
+            <label>Bench Players</label>
+            <strong id="benchCount">0</strong>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="footer-actions">
+            <button class="btn btn-primary" id="clockToggleBtn">▶ Start</button>
+            <button class="btn btn-secondary" id="periodBtn" type="button">End Half 1</button>
+            <button class="btn btn-accent" id="openBoardBtn" type="button">⛶ Full-Screen Field</button>
+            <button class="btn btn-primary" id="endGameBtn" type="button">■ End &amp; Save Game</button>
+            <button class="btn btn-secondary" id="backToLineupBtn">← Back to Lineup</button>
+            <button class="btn btn-danger" id="resetBtn">↺ Reset Game</button>
+          </div>
+        </div>
+
+        <div class="layout-grid">
+          <div>
+            <div class="panel" style="margin-bottom:16px;">
+              <h3>Bench</h3>
+              <p class="note">Tap one bench player after selecting who is coming off the field.</p>
+              <div class="bench-list" id="benchList"></div>
+            </div>
+
+            <div class="panel" style="margin-bottom:16px;">
+              <h3>Playing Time</h3>
+              <p class="note" id="playingTimeNote">Minutes on the field, counted from the game clock. Fewest minutes first.</p>
+              <div class="time-list" id="playingTimeList"></div>
+            </div>
+
+            <div class="panel" style="margin-bottom:16px;">
+              <h3>Current Selection</h3>
+              <div class="selected-pair" id="gameSelectionBox">
+                <strong>No swap selected yet</strong>
+                <div class="muted">Choose a player on the field, then choose a player on the bench.</div>
+              </div>
+              <div class="footer-actions">
+                <button class="btn btn-accent" id="addSwapBtn" disabled>Add Swap</button>
+                <button class="btn btn-secondary" id="clearSelectionBtn">Clear Selection</button>
+              </div>
+            </div>
+
+            <div class="panel" style="margin-bottom:16px;">
+              <h3>Pending Subs</h3>
+              <p class="note">Line up as many swaps as you need, then confirm them all at once.</p>
+              <div class="pending-list" id="pendingList"></div>
+              <div class="footer-actions" style="margin-top:14px;">
+                <button class="btn btn-primary" id="confirmSubsBtn" disabled>Confirm Subs</button>
+                <button class="btn btn-secondary" id="clearPendingBtn">Clear Pending</button>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h3>Substitution Log</h3>
+              <div class="history-list" id="historyList"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h3>On The Field</h3>
+              <button class="btn btn-secondary preset-btn" id="openBoardBtn2" type="button">⛶ Full screen</button>
+            </div>
+            <p class="note" id="gameFormationNote">Tap a player card on the field to mark who is coming off.</p>
+            <div class="field" id="gameField">
+              <div class="center-circle"></div>
+              <div class="goal-box top"></div>
+              <div class="goal-box bottom"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-history">
+        <div class="hero-card">
+          <h2>Game History</h2>
+          <p id="historyHeroText">Saved games for this team.</p>
+        </div>
+
+        <div id="historyListView">
+          <div class="panel" style="margin-bottom:16px;">
+            <h3>Season Playing Time</h3>
+            <p class="note">Totals across every saved game for this team. Players averaging under 50% are listed first.</p>
+            <div id="seasonTable"></div>
+          </div>
+          <div class="panel">
+            <h3>Saved Games</h3>
+            <div class="history-list" id="gameList"></div>
+          </div>
+        </div>
+
+        <div id="historyDetailView" hidden></div>
+
+        <div class="footer-actions" style="margin-top:16px; justify-content:center;">
+          <button class="btn btn-secondary" id="historyBackToTeamBtn" type="button">← Team</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h3 id="modalTitle"></h3>
+      <div id="modalBody"></div>
+      <div class="modal-actions" id="modalActions"></div>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Full-screen play board -->
+  <div class="board-overlay" id="boardOverlay" hidden role="dialog" aria-modal="true" aria-label="Full-screen play board">
+    <div class="board-bar">
+      <button class="btn btn-back" id="boardBackBtn" type="button">← Back to Live View</button>
+      <div class="board-title">
+        <strong>Play Board</strong>
+        <small id="boardClock">00:00</small>
+      </div>
+      <div class="tool-group" role="group" aria-label="Drawing tool">
+        <button class="tool-btn" data-tool="pen" type="button" title="Freehand line">✎ Draw</button>
+        <button class="tool-btn" data-tool="arrow" type="button" title="Solid line with an arrowhead — passes or ball movement">→ Arrow</button>
+        <button class="tool-btn" data-tool="run" type="button" title="Dashed line with an arrowhead — player runs">⇢ Run</button>
+      </div>
+      <div class="tool-group" role="group" aria-label="Line color" id="boardSwatches"></div>
+      <div class="tool-group">
+        <button class="tool-btn" id="boardUndoBtn" type="button">↶ Undo</button>
+        <button class="tool-btn" id="boardClearBtn" type="button">✕ Clear</button>
+      </div>
+    </div>
+    <div class="board-stage">
+      <div class="field board-field" id="boardField">
+        <div class="center-circle"></div>
+        <div class="goal-box top"></div>
+        <div class="goal-box bottom"></div>
+        <canvas class="board-canvas" id="boardCanvas" aria-label="Drawing area — drag to draw plays"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+
+    const TEAMS_STORAGE_KEY = 'soccerSubManagerTeams';
+    const LEGACY_ROSTER_KEY = 'soccerSubManagerRoster';
+
+    /* ---------- Levels (THJSL game formats) ---------- */
+    const LEVELS = [
+      { key: '4v4', name: '4v4', players: 4, goalkeeper: false, total: 40, periods: '4 × 10-min quarters', halftime: '', periodCount: 4, periodName: 'Quarter', periodMinutes: 10 },
+      { key: '7v7', name: '7v7', players: 7, goalkeeper: true, total: 50, periods: '2 × 25-min halves', halftime: '5-min halftime', periodCount: 2, periodName: 'Half', periodMinutes: 25 },
+      { key: '9v9', name: '9v9', players: 9, goalkeeper: true, total: 60, periods: '2 × 30-min halves', halftime: '5-min halftime', periodCount: 2, periodName: 'Half', periodMinutes: 30 },
+      { key: '11v11', name: '11v11', players: 11, goalkeeper: true, total: 70, periods: '2 × 35-min halves', halftime: '5-min halftime', periodCount: 2, periodName: 'Half', periodMinutes: 35 },
+      { key: 'hs', name: 'High School', sub: '11v11', players: 11, goalkeeper: true, total: 80, periods: '2 × 40-min halves', halftime: '5-min halftime', periodCount: 2, periodName: 'Half', periodMinutes: 40 }
+    ];
+    const DEFAULT_LEVEL = '7v7';
+
+    /* ---------- The 11 positions (spots follow the 4-3-3 reference) ---------- */
+    const POSITION_CATALOG = [
+      { key: 'leftWing', label: 'Left Winger', short: 'LW', row: 'fwd', px: 18, py: 14 },
+      { key: 'centerForward', label: 'Center Forward', short: 'CF', row: 'fwd', px: 50, py: 11 },
+      { key: 'rightWing', label: 'Right Winger', short: 'RW', row: 'fwd', px: 82, py: 14 },
+      { key: 'leftMid', label: 'Left Midfield', short: 'LM', row: 'mid', px: 20, py: 39 },
+      { key: 'centerMid', label: 'Center Midfield', short: 'CM', row: 'mid', px: 50, py: 41 },
+      { key: 'rightMid', label: 'Right Midfield', short: 'RM', row: 'mid', px: 80, py: 39 },
+      { key: 'leftBack', label: 'Left Back', short: 'LB', row: 'def', px: 12, py: 65 },
+      { key: 'centerBackL', label: 'Center Back', short: 'CB', row: 'def', px: 37, py: 67 },
+      { key: 'centerBackR', label: 'Center Back', short: 'CB', row: 'def', px: 63, py: 67 },
+      { key: 'rightBack', label: 'Right Back', short: 'RB', row: 'def', px: 88, py: 65 },
+      { key: 'goalkeeper', label: 'Goalkeeper', short: 'GK', row: 'gk', px: 50, py: 88 }
+    ];
+    const CATALOG_KEYS = POSITION_CATALOG.map(p => p.key);
+    const ROWS = ['fwd', 'mid', 'def', 'gk'];
+    const ROW_Y = { fwd: 14, mid: 37, def: 61, gk: 85 };
+    const ROW_X = { 1: [50], 2: [30, 70], 3: [18, 50, 82], 4: [13, 37.7, 62.3, 87] };
+    const ROW_NAMES = { gk: 'Goalkeeper', def: 'Defenders', mid: 'Midfielders', fwd: 'Forwards' };
+
+    const FORMATION_PRESETS = {
+      '4v4': [
+        { name: 'Diamond 1-2-1', keys: ['centerBackL', 'leftMid', 'rightMid', 'centerForward'] },
+        { name: 'Box 2-2', keys: ['leftBack', 'rightBack', 'leftWing', 'rightWing'] }
+      ],
+      '7v7': [
+        { name: '3-2-1', keys: ['goalkeeper', 'leftBack', 'centerBackL', 'rightBack', 'leftMid', 'rightMid', 'centerForward'] },
+        { name: '2-3-1', keys: ['goalkeeper', 'centerBackL', 'centerBackR', 'leftMid', 'centerMid', 'rightMid', 'centerForward'] },
+        { name: '3-1-2', keys: ['goalkeeper', 'leftBack', 'centerBackL', 'rightBack', 'centerMid', 'leftWing', 'rightWing'] }
+      ],
+      '9v9': [
+        { name: '3-3-2', keys: ['goalkeeper', 'leftBack', 'centerBackL', 'rightBack', 'leftMid', 'centerMid', 'rightMid', 'leftWing', 'rightWing'] },
+        { name: '4-3-1', keys: ['goalkeeper', 'leftBack', 'centerBackL', 'centerBackR', 'rightBack', 'leftMid', 'centerMid', 'rightMid', 'centerForward'] },
+        { name: '3-2-3', keys: ['goalkeeper', 'leftBack', 'centerBackL', 'rightBack', 'leftMid', 'rightMid', 'leftWing', 'centerForward', 'rightWing'] }
+      ],
+      '11v11': [
+        { name: '4-3-3', keys: CATALOG_KEYS.slice() }
+      ],
+      'hs': [
+        { name: '4-3-3', keys: CATALOG_KEYS.slice() }
+      ]
+    };
+
+    function getLevel(key) {
+      return LEVELS.find(level => level.key === key) || LEVELS.find(level => level.key === DEFAULT_LEVEL);
+    }
+
+    function levelLabel(level) {
+      return level.sub ? `${level.name} ${level.sub}` : level.name;
+    }
+
+    function levelFormat(level) {
+      return `${level.total} min · ${level.periods}${level.halftime ? `, ${level.halftime}` : ''}`;
+    }
+
+    function defaultFormation(levelKey) {
+      return FORMATION_PRESETS[getLevel(levelKey).key][0].keys.slice();
+    }
+
+    function makeId() {
+      return 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    }
+
+    function makeTeam(name, players = [], levelKey = DEFAULT_LEVEL) {
+      return { id: makeId(), name, players, level: levelKey, formation: defaultFormation(levelKey) };
+    }
+
+    function normalizeTeam(team) {
+      const level = getLevel(team.level);
+      let formation = Array.isArray(team.formation)
+        ? [...new Set(team.formation.filter(key => CATALOG_KEYS.includes(key)))]
+        : null;
+      if (formation && !level.goalkeeper) formation = formation.filter(key => key !== 'goalkeeper');
+      if (formation) formation = formation.slice(0, level.players);
+      if (!formation || !formation.length) formation = defaultFormation(level.key);
+      return {
+        id: team.id || makeId(),
+        name: team.name,
+        players: team.players.filter(p => typeof p === 'string'),
+        level: level.key,
+        formation
+      };
+    }
+
+    function cleanName(raw) {
+      return String(raw || '').trim().replace(/\s+/g, ' ');
+    }
+
+    function escapeHtml(text) {
+      return String(text).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    }
+
+    function readStorage(key) {
+      try { return window.localStorage.getItem(key); } catch (error) { return null; }
+    }
+
+    function normalizeTeamsData(parsed) {
+      if (!parsed || !Array.isArray(parsed.teams)) return null;
+      const teams = parsed.teams
+        .filter(team => team && typeof team.name === 'string' && Array.isArray(team.players))
+        .map(normalizeTeam);
+      if (!teams.length) return null;
+      const activeId = teams.some(team => team.id === parsed.activeId) ? parsed.activeId : teams[0].id;
+      return { activeId, teams };
+    }
+
+    /* Older versions kept teams in localStorage. Used only to migrate into the database on first launch. */
+    function loadLegacyTeams() {
+      try {
+        const raw = readStorage(TEAMS_STORAGE_KEY);
+        const parsed = raw ? normalizeTeamsData(JSON.parse(raw)) : null;
+        if (parsed) return parsed;
+      } catch (error) { /* fall through to defaults */ }
+      // A brand-new install starts with one empty team for the coach to name and fill in.
+      let players = [];
+      try {
+        const legacy = JSON.parse(readStorage(LEGACY_ROSTER_KEY) || 'null');
+        if (Array.isArray(legacy)) players = legacy.filter(p => typeof p === 'string');
+      } catch (error) { /* ignore */ }
+      const team = makeTeam('My Team', players, '7v7');
+      return { activeId: team.id, teams: [team] };
+    }
+
+    /* ---------- Storage layer ----------
+       Every save and load goes through Store. It uses the browser's IndexedDB database,
+       falls back to localStorage, then to memory. A native app build only needs to swap
+       these few functions for the device database. */
+    const Store = {
+      mode: 'memory',
+      db: null,
+      mem: { kv: {}, games: {} },
+      ready: null,
+
+      async init() {
+        if (window.indexedDB) {
+          try {
+            this.db = await new Promise((resolve, reject) => {
+              const request = indexedDB.open('soccer-sub-manager', 1);
+              request.onupgradeneeded = () => {
+                const db = request.result;
+                if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+                if (!db.objectStoreNames.contains('games')) db.createObjectStore('games', { keyPath: 'id' });
+              };
+              request.onsuccess = () => resolve(request.result);
+              request.onerror = () => reject(request.error);
+              request.onblocked = () => reject(new Error('Database blocked'));
+            });
+            this.mode = 'indexeddb';
+            return;
+          } catch (error) { this.db = null; }
+        }
+        try {
+          window.localStorage.setItem('ssm:test', '1');
+          window.localStorage.removeItem('ssm:test');
+          this.mode = 'local';
+        } catch (error) {
+          this.mode = 'memory';
+        }
+      },
+
+      tx(storeName, mode, work) {
+        return new Promise((resolve, reject) => {
+          const transaction = this.db.transaction(storeName, mode);
+          const request = work(transaction.objectStore(storeName));
+          let result;
+          if (request) request.onsuccess = () => { result = request.result; };
+          transaction.oncomplete = () => resolve(result);
+          transaction.onerror = () => reject(transaction.error);
+          transaction.onabort = () => reject(transaction.error || new Error('Save aborted'));
+        });
+      },
+
+      localRead(key, fallback) {
+        try {
+          const raw = window.localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : fallback;
+        } catch (error) { return fallback; }
+      },
+
+      localWrite(key, value) {
+        window.localStorage.setItem(key, JSON.stringify(value));
+      },
+
+      async get(key) {
+        await this.ready;
+        if (this.mode === 'indexeddb') return this.tx('kv', 'readonly', s => s.get(key));
+        if (this.mode === 'local') return this.localRead(`ssm:kv:${key}`, undefined);
+        return this.mem.kv[key];
+      },
+
+      async set(key, value) {
+        await this.ready;
+        const copy = JSON.parse(JSON.stringify(value));
+        if (this.mode === 'indexeddb') return this.tx('kv', 'readwrite', s => s.put(copy, key));
+        if (this.mode === 'local') return this.localWrite(`ssm:kv:${key}`, copy);
+        this.mem.kv[key] = copy;
+      },
+
+      async del(key) {
+        await this.ready;
+        if (this.mode === 'indexeddb') return this.tx('kv', 'readwrite', s => s.delete(key));
+        if (this.mode === 'local') return window.localStorage.removeItem(`ssm:kv:${key}`);
+        delete this.mem.kv[key];
+      },
+
+      async allGames() {
+        await this.ready;
+        if (this.mode === 'indexeddb') return (await this.tx('games', 'readonly', s => s.getAll())) || [];
+        if (this.mode === 'local') return this.localRead('ssm:games', []);
+        return Object.values(this.mem.games);
+      },
+
+      async putGames(games) {
+        await this.ready;
+        const copies = JSON.parse(JSON.stringify(games));
+        if (this.mode === 'indexeddb') return this.tx('games', 'readwrite', s => { copies.forEach(game => s.put(game)); });
+        if (this.mode === 'local') {
+          const list = this.localRead('ssm:games', []);
+          copies.forEach(game => {
+            const index = list.findIndex(g => g.id === game.id);
+            if (index >= 0) list[index] = game; else list.push(game);
+          });
+          return this.localWrite('ssm:games', list);
+        }
+        copies.forEach(game => { this.mem.games[game.id] = game; });
+      },
+
+      async deleteGames(ids) {
+        await this.ready;
+        if (this.mode === 'indexeddb') return this.tx('games', 'readwrite', s => { ids.forEach(id => s.delete(id)); });
+        if (this.mode === 'local') return this.localWrite('ssm:games', this.localRead('ssm:games', []).filter(g => !ids.includes(g.id)));
+        ids.forEach(id => { delete this.mem.games[id]; });
+      },
+
+      async replaceGames(games) {
+        await this.ready;
+        const copies = JSON.parse(JSON.stringify(games));
+        if (this.mode === 'indexeddb') return this.tx('games', 'readwrite', s => { s.clear(); copies.forEach(game => s.put(game)); });
+        if (this.mode === 'local') return this.localWrite('ssm:games', copies);
+        this.mem.games = Object.fromEntries(copies.map(game => [game.id, game]));
+      }
+    };
+    Store.ready = Store.init();
+
+    let teamsData = loadLegacyTeams();
+    let gamesCache = [];
+    let lastBackupAt = null;
+    let storageProtected = false;
+
+    function reportSaveError(error) {
+      console.error(error);
+      showToast("Couldn't save to this device. Back up your teams now.", 'error');
+    }
+
+    function persistTeams() {
+      Store.set('teams', teamsData).catch(reportSaveError);
+    }
+
+    function activeTeam() {
+      return teamsData.teams.find(team => team.id === teamsData.activeId) || teamsData.teams[0];
+    }
+
+    function activeLevel() {
+      return getLevel(activeTeam().level);
+    }
+
+    function saveRoster() {
+      activeTeam().players = roster.slice();
+      persistTeams();
+    }
+
+    let roster = activeTeam().players.slice();
+
+    /* Lay out the team's chosen positions: each row is spaced evenly across the field. */
+    function currentPositions() {
+      const keys = new Set(activeTeam().formation);
+      const bothCenterBacks = keys.has('centerBackL') && keys.has('centerBackR');
+      const result = [];
+      ROWS.forEach(row => {
+        const inRow = POSITION_CATALOG.filter(p => p.row === row && keys.has(p.key));
+        const xs = ROW_X[inRow.length] || [];
+        inRow.forEach((p, i) => {
+          let label = p.label;
+          let short = p.short;
+          if (bothCenterBacks && p.key === 'centerBackL') { label = 'Left Center Back'; short = 'LCB'; }
+          if (bothCenterBacks && p.key === 'centerBackR') { label = 'Right Center Back'; short = 'RCB'; }
+          result.push({ key: p.key, label, short, row, x: xs[i], y: ROW_Y[row] });
+        });
+      });
+      return result;
+    }
+
+    function isDenseFormation() {
+      return ROWS.some(row => positions.filter(p => p.row === row).length >= 4);
+    }
+
+    function describeFormation(keys) {
+      const set = new Set(keys);
+      const count = row => POSITION_CATALOG.filter(p => p.row === row && set.has(p.key)).length;
+      const d = count('def');
+      const m = count('mid');
+      const f = count('fwd');
+      const g = count('gk');
+      const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+      const parts = [];
+      if (g) parts.push('Goalkeeper');
+      if (d) parts.push(plural(d, 'defender'));
+      if (m) parts.push(plural(m, 'midfielder'));
+      if (f) parts.push(plural(f, 'forward'));
+      return {
+        shape: [d, m, f].filter(n => n > 0).join('-'),
+        text: parts.length ? parts.join(', ') : 'No positions picked yet'
+      };
+    }
+
+    let positions = currentPositions();
+
+    const state = {
+      currentScreen: 'team',
+      availablePlayers: new Set(roster),
+      lineupAssignments: Object.fromEntries(positions.map(p => [p.key, null])),
+      bench: [],
+      selectedLineupPlayer: null,
+      selectedFieldPosition: null,
+      selectedBenchPlayer: null,
+      pendingSubs: [],
+      history: [],
+      totalSwapsMade: 0,
+      seconds: 0,
+      clockRunning: false,
+      clockAnchor: null,
+      timer: null,
+      period: 1,
+      game: null,
+      historyGameId: null,
+      theme: 'light'
+    };
+
+    /* Recompute field spots after a level/formation change, keeping players in positions that remain. */
+    function refreshPositions() {
+      positions = currentPositions();
+      const keys = new Set(positions.map(p => p.key));
+      const next = {};
+      positions.forEach(p => { next[p.key] = state.lineupAssignments[p.key] || null; });
+      state.lineupAssignments = next;
+      state.pendingSubs = state.pendingSubs.filter(swap => keys.has(swap.positionKey));
+      state.pendingSubs.forEach(swap => { swap.positionLabel = positions.find(p => p.key === swap.positionKey).label; });
+      if (!keys.has(state.selectedFieldPosition)) state.selectedFieldPosition = null;
+    }
+
+    const els = {
+      setupPlayers: document.getElementById('setupPlayers'),
+      selectedCount: document.getElementById('selectedCount'),
+      toLineupBtn: document.getElementById('toLineupBtn'),
+      selectAllBtn: document.getElementById('selectAllBtn'),
+      setupHeroText: document.getElementById('setupHeroText'),
+      lineupPlayers: document.getElementById('lineupPlayers'),
+      lineupField: document.getElementById('lineupField'),
+      lineupNote: document.getElementById('lineupNote'),
+      lineupFormationNote: document.getElementById('lineupFormationNote'),
+      startGameBtn: document.getElementById('startGameBtn'),
+      backToSetupBtn: document.getElementById('backToSetupBtn'),
+      lineupSelectionBox: document.getElementById('lineupSelectionBox'),
+      gameField: document.getElementById('gameField'),
+      gameFormationNote: document.getElementById('gameFormationNote'),
+      benchList: document.getElementById('benchList'),
+      pendingList: document.getElementById('pendingList'),
+      historyList: document.getElementById('historyList'),
+      gameSelectionBox: document.getElementById('gameSelectionBox'),
+      addSwapBtn: document.getElementById('addSwapBtn'),
+      clearSelectionBtn: document.getElementById('clearSelectionBtn'),
+      confirmSubsBtn: document.getElementById('confirmSubsBtn'),
+      clearPendingBtn: document.getElementById('clearPendingBtn'),
+      clockDisplay: document.getElementById('clockDisplay'),
+      clockFormat: document.getElementById('clockFormat'),
+      clockToggleBtn: document.getElementById('clockToggleBtn'),
+      backToLineupBtn: document.getElementById('backToLineupBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      roundCount: document.getElementById('roundCount'),
+      totalSwapsDisplay: document.getElementById('totalSwapsDisplay'),
+      benchCount: document.getElementById('benchCount'),
+      themeToggle: document.getElementById('themeToggle'),
+      themeIcon: document.getElementById('themeIcon'),
+      rosterBtn: document.getElementById('rosterBtn'),
+      rosterList: document.getElementById('rosterList'),
+      rosterCount: document.getElementById('rosterCount'),
+      rosterTotal: document.getElementById('rosterTotal'),
+      newPlayerInput: document.getElementById('newPlayerInput'),
+      addPlayerBtn: document.getElementById('addPlayerBtn'),
+      rosterMessage: document.getElementById('rosterMessage'),
+      teamSelect: document.getElementById('teamSelect'),
+      newTeamBtn: document.getElementById('newTeamBtn'),
+      teamNameInput: document.getElementById('teamNameInput'),
+      renameTeamBtn: document.getElementById('renameTeamBtn'),
+      bulkInput: document.getElementById('bulkInput'),
+      bulkAddBtn: document.getElementById('bulkAddBtn'),
+      clearPlayersBtn: document.getElementById('clearPlayersBtn'),
+      deleteTeamBtn: document.getElementById('deleteTeamBtn'),
+      deleteAllTeamsBtn: document.getElementById('deleteAllTeamsBtn'),
+      teamWarning: document.getElementById('teamWarning'),
+      toSetupBtn: document.getElementById('toSetupBtn'),
+      backToTeamBtn: document.getElementById('backToTeamBtn'),
+      headerTeamName: document.getElementById('headerTeamName'),
+      lineupWarning: document.getElementById('lineupWarning'),
+      setupWarning: document.getElementById('setupWarning'),
+      levelGrid: document.getElementById('levelGrid'),
+      presetRow: document.getElementById('presetRow'),
+      formationPicker: document.getElementById('formationPicker'),
+      formationCount: document.getElementById('formationCount'),
+      formationSummary: document.getElementById('formationSummary'),
+      formationWarning: document.getElementById('formationWarning'),
+      formationMessage: document.getElementById('formationMessage'),
+      openBoardBtn: document.getElementById('openBoardBtn'),
+      openBoardBtn2: document.getElementById('openBoardBtn2'),
+      boardOverlay: document.getElementById('boardOverlay'),
+      boardBackBtn: document.getElementById('boardBackBtn'),
+      boardField: document.getElementById('boardField'),
+      boardCanvas: document.getElementById('boardCanvas'),
+      boardSwatches: document.getElementById('boardSwatches'),
+      boardUndoBtn: document.getElementById('boardUndoBtn'),
+      boardClearBtn: document.getElementById('boardClearBtn'),
+      boardClock: document.getElementById('boardClock'),
+      periodBtn: document.getElementById('periodBtn'),
+      endGameBtn: document.getElementById('endGameBtn'),
+      playingTimeList: document.getElementById('playingTimeList'),
+      playingTimeNote: document.getElementById('playingTimeNote'),
+      historyBtn: document.getElementById('historyBtn'),
+      viewHistoryBtn: document.getElementById('viewHistoryBtn'),
+      historyBackToTeamBtn: document.getElementById('historyBackToTeamBtn'),
+      historyHeroText: document.getElementById('historyHeroText'),
+      historyListView: document.getElementById('historyListView'),
+      historyDetailView: document.getElementById('historyDetailView'),
+      seasonTable: document.getElementById('seasonTable'),
+      gameList: document.getElementById('gameList'),
+      dataStatus: document.getElementById('dataStatus'),
+      backupBtn: document.getElementById('backupBtn'),
+      restoreBtn: document.getElementById('restoreBtn'),
+      restoreInput: document.getElementById('restoreInput'),
+      shareTeamBtn: document.getElementById('shareTeamBtn'),
+      backupReminder: document.getElementById('backupReminder'),
+      modalBackdrop: document.getElementById('modalBackdrop'),
+      modalTitle: document.getElementById('modalTitle'),
+      modalBody: document.getElementById('modalBody'),
+      modalActions: document.getElementById('modalActions'),
+      toast: document.getElementById('toast')
+    };
+
+
+    function initials(name) {
+      return name.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase();
+    }
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const secs = (seconds % 60).toString().padStart(2, '0');
+      return `${mins}:${secs}`;
+    }
+
+    function isAssigned(player) {
+      return Object.values(state.lineupAssignments).includes(player);
+    }
+
+    function getAvailablePlayersArray() {
+      return roster.filter(player => state.availablePlayers.has(player));
+    }
+
+    function unassignedPlayers() {
+      return getAvailablePlayersArray().filter(player => !isAssigned(player));
+    }
+
+    function setScreen(screen) {
+      state.currentScreen = screen;
+      document.querySelectorAll('.screen').forEach(el => el.classList.toggle('active', el.id === `screen-${screen}`));
+      document.querySelectorAll('[data-step-indicator]').forEach(el => el.classList.toggle('active', el.dataset.stepIndicator === screen));
+      renderAll();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* ---------- Level & formation ---------- */
+    function setFormationMessage(text) {
+      els.formationMessage.textContent = text || '';
+      els.formationMessage.style.display = text ? 'block' : 'none';
+    }
+
+    function gameInProgress() {
+      return state.history.length > 0 || state.clockRunning || state.seconds > 0;
+    }
+
+    function setLevel(levelKey) {
+      const team = activeTeam();
+      if (team.level === levelKey) return;
+      const level = getLevel(levelKey);
+      const hasLineup = Object.values(state.lineupAssignments).some(Boolean);
+      if ((hasLineup || gameInProgress()) &&
+          !window.confirm(`Switch ${team.name} to ${levelLabel(level)}? The formation changes to ${level.players} positions and today's lineup will be cleared.`)) {
+        return;
+      }
+      team.level = level.key;
+      team.formation = defaultFormation(level.key);
+      persistTeams();
+      state.lineupAssignments = {};
+      state.pendingSubs = [];
+      state.selectedLineupPlayer = null;
+      clearGameSelections();
+      refreshPositions();
+      setFormationMessage('');
+      renderAll();
+    }
+
+    /* Apply a new set of position keys, confirming if anyone on the field would lose her spot. */
+    function applyFormation(keys) {
+      const team = activeTeam();
+      const keep = new Set(keys);
+      const displaced = Object.entries(state.lineupAssignments)
+        .filter(([key, player]) => player && !keep.has(key))
+        .map(([, player]) => player);
+      if (displaced.length &&
+          !window.confirm(`${displaced.join(', ')} will move to the bench because ${displaced.length === 1 ? 'her position is' : 'their positions are'} no longer in the formation. Continue?`)) {
+        return false;
+      }
+      team.formation = keys.slice();
+      persistTeams();
+      refreshPositions();
+      return true;
+    }
+
+    function togglePosition(key) {
+      const team = activeTeam();
+      const level = activeLevel();
+      if (key === 'goalkeeper' && !level.goalkeeper) return;
+      if (team.formation.includes(key)) {
+        if (applyFormation(team.formation.filter(k => k !== key))) setFormationMessage('');
+      } else {
+        if (team.formation.length >= level.players) {
+          setFormationMessage(`${levelLabel(level)} uses ${level.players} positions. Tap a highlighted jersey to remove it before adding another.`);
+          renderAll();
+          return;
+        }
+        applyFormation([...team.formation, key]);
+        setFormationMessage('');
+      }
+      renderAll();
+    }
+
+    function renderFormation() {
+      const team = activeTeam();
+      const level = getLevel(team.level);
+      const chosen = new Set(team.formation);
+
+      els.levelGrid.innerHTML = '';
+      LEVELS.forEach(l => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = `level-card ${l.key === level.key ? 'selected' : ''}`;
+        card.setAttribute('aria-pressed', String(l.key === level.key));
+        card.innerHTML = `
+          <strong>${l.name}${l.sub ? `<em>${l.sub}</em>` : ''}</strong>
+          <span class="level-players">${l.players} on the field · ${l.goalkeeper ? 'incl. goalkeeper' : 'no goalkeepers'}</span>
+          <small>${levelFormat(l)}</small>
+        `;
+        card.addEventListener('click', () => setLevel(l.key));
+        els.levelGrid.appendChild(card);
+      });
+
+      els.presetRow.innerHTML = '';
+      FORMATION_PRESETS[level.key].forEach(preset => {
+        const active = preset.keys.length === chosen.size && preset.keys.every(k => chosen.has(k));
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `btn btn-secondary preset-btn ${active ? 'active' : ''}`;
+        button.textContent = preset.name;
+        button.addEventListener('click', () => {
+          if (applyFormation(preset.keys)) setFormationMessage('');
+          renderAll();
+        });
+        els.presetRow.appendChild(button);
+      });
+
+      els.formationPicker.querySelectorAll('.pick-chip').forEach(el => el.remove());
+      POSITION_CATALOG.forEach(p => {
+        const on = chosen.has(p.key);
+        const disabled = p.key === 'goalkeeper' && !level.goalkeeper;
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = `pick-chip g-${p.row} ${on ? 'on' : 'off'}`;
+        chip.style.left = `${p.px}%`;
+        chip.style.top = `${p.py}%`;
+        chip.disabled = disabled;
+        chip.setAttribute('aria-pressed', String(on));
+        chip.setAttribute('aria-label', `${p.label}${disabled ? ' — not used at 4v4' : ''}`);
+        chip.title = disabled ? 'No goalkeepers at 4v4' : p.label;
+        chip.innerHTML = `<span class="jersey" aria-hidden="true">${on ? '✓' : ''}</span><span class="pick-label">${disabled ? 'No keeper' : p.label}</span>`;
+        chip.addEventListener('click', () => togglePosition(p.key));
+        els.formationPicker.appendChild(chip);
+      });
+
+      const count = team.formation.length;
+      const shape = describeFormation(team.formation).shape;
+      els.formationCount.textContent = `${count} / ${level.players} positions${shape ? ` · ${shape}` : ''}`;
+      els.formationCount.classList.toggle('complete', count === level.players);
+
+      const labelsByKey = Object.fromEntries(currentPositions().map(p => [p.key, p.label]));
+      els.formationSummary.innerHTML = ['gk', 'def', 'mid', 'fwd'].map(row => {
+        const inRow = POSITION_CATALOG.filter(p => p.row === row && chosen.has(p.key));
+        if (row === 'gk' && !level.goalkeeper) return '';
+        const names = inRow.length ? inRow.map(p => labelsByKey[p.key] || p.label).join(', ') : '—';
+        return `<div><b>${ROW_NAMES[row]} (${inRow.length})</b><span>${names}</span></div>`;
+      }).join('');
+
+      const notes = [];
+      if (count < level.players) {
+        const left = level.players - count;
+        notes.push(`Pick ${left} more position${left === 1 ? '' : 's'} — ${levelLabel(level)} puts ${level.players} players on the field.`);
+      }
+      if (level.goalkeeper && !chosen.has('goalkeeper') && count > 0) {
+        notes.push(`No goalkeeper selected. ${levelLabel(level)} games are played with keepers.`);
+      }
+      els.formationWarning.style.display = notes.length ? 'block' : 'none';
+      els.formationWarning.textContent = notes.join(' ');
+    }
+
+    function renderSetup() {
+      const level = activeLevel();
+      const selected = state.availablePlayers.size;
+      els.selectedCount.textContent = selected;
+      els.rosterTotal.textContent = roster.length;
+      els.toLineupBtn.disabled = selected < 1;
+      els.selectAllBtn.textContent = selected === roster.length && roster.length > 0 ? 'Clear All' : 'Select All';
+      els.setupHeroText.textContent = `Tap players to mark who is available today. ${level.players} players fill the field at ${levelLabel(level)}, but that is only a guide — you can continue with any number.`;
+      els.setupPlayers.innerHTML = '';
+
+      if (!roster.length) {
+        els.setupWarning.style.display = 'block';
+        els.setupWarning.textContent = 'Your roster is empty. Go back to the Team step to add players.';
+      } else if (selected === 0) {
+        els.setupWarning.style.display = 'block';
+        els.setupWarning.textContent = 'Select at least one player to continue.';
+      } else if (selected < level.players) {
+        els.setupWarning.style.display = 'block';
+        els.setupWarning.textContent = `Heads up: ${level.players} players fill a full ${levelLabel(level)} field. You have ${selected} available — you can still continue.`;
+      } else {
+        els.setupWarning.style.display = 'none';
+      }
+
+      if (!roster.length) {
+        els.setupPlayers.innerHTML = `<div class="empty-state">No players on the roster yet. Use the Team step to add your team.</div>`;
+        return;
+      }
+
+      roster.forEach((player, index) => {
+        const available = state.availablePlayers.has(player);
+        const button = document.createElement('button');
+        button.className = `player-card ${available ? 'available' : 'unavailable'}`;
+        button.innerHTML = `<div style="font-size:1.15rem;">${index + 1}</div><div>${escapeHtml(player)}</div><small>${available ? 'Available' : 'Out today'}</small>`;
+        button.addEventListener('click', () => {
+          if (available) state.availablePlayers.delete(player);
+          else state.availablePlayers.add(player);
+          if (!state.availablePlayers.has(player)) {
+            Object.keys(state.lineupAssignments).forEach(key => {
+              if (state.lineupAssignments[key] === player) state.lineupAssignments[key] = null;
+            });
+          }
+          renderAll();
+        });
+        els.setupPlayers.appendChild(button);
+      });
+    }
+
+    function renderLineupPlayers() {
+      const pool = unassignedPlayers();
+      els.lineupPlayers.innerHTML = '';
+      els.lineupNote.textContent = `Assigned players disappear from this list. Bench players are whoever remains after all ${positions.length} positions are filled.`;
+
+      if (!pool.length) {
+        els.lineupPlayers.innerHTML = `<div class="empty-state">All available players are currently assigned to a starting spot or on the bench once you begin.</div>`;
+      } else {
+        pool.forEach(player => {
+          const button = document.createElement('button');
+          button.className = `player-chip ${state.selectedLineupPlayer === player ? 'selected' : ''}`;
+          button.innerHTML = `<span>${escapeHtml(player)}</span><small>${initials(player)}</small>`;
+          button.addEventListener('click', () => {
+            state.selectedLineupPlayer = state.selectedLineupPlayer === player ? null : player;
+            renderAll();
+          });
+          els.lineupPlayers.appendChild(button);
+        });
+      }
+
+      if (state.selectedLineupPlayer) {
+        els.lineupSelectionBox.style.display = 'block';
+        els.lineupSelectionBox.innerHTML = `<strong>Selected Player</strong><div>${escapeHtml(state.selectedLineupPlayer)}</div><div class="muted">Now tap a position on the field.</div>`;
+      } else {
+        els.lineupSelectionBox.style.display = 'none';
+      }
+    }
+
+    function createPositionSlot(position, mode) {
+      const player = state.lineupAssignments[position.key];
+      const slot = document.createElement('button');
+      slot.className = `position-slot ${player ? 'filled' : 'empty'}`;
+      if (mode === 'lineup' && state.selectedLineupPlayer) slot.classList.add('selected');
+      if (mode === 'game' && state.selectedFieldPosition === position.key) slot.classList.add('selected-off');
+      if (mode === 'game' && state.pendingSubs.some(swap => swap.positionKey === position.key)) slot.classList.add('pending');
+      slot.style.left = `${position.x}%`;
+      slot.style.top = `${position.y}%`;
+      slot.setAttribute('aria-label', `${position.label}: ${player || 'open spot'}`);
+      slot.innerHTML = `
+        <strong><span class="pos-full">${position.label}</span><span class="pos-short">${position.short}</span></strong>
+        <span class="slot-name">${player ? escapeHtml(player) : 'Tap to assign'}</span>
+        <div class="tiny">${player ? 'On field' : 'Open spot'}</div>
+      `;
+
+      if (mode === 'lineup') {
+        slot.addEventListener('click', () => {
+          if (!state.selectedLineupPlayer) return;
+          const current = state.lineupAssignments[position.key];
+          state.lineupAssignments[position.key] = state.selectedLineupPlayer;
+          state.selectedLineupPlayer = current && current !== state.selectedLineupPlayer ? current : null;
+          renderAll();
+        });
+      }
+
+      if (mode === 'game') {
+        slot.addEventListener('click', () => {
+          if (state.pendingSubs.some(swap => swap.positionKey === position.key)) return;
+          state.selectedFieldPosition = state.selectedFieldPosition === position.key ? null : position.key;
+          renderAll();
+        });
+      }
+
+      return slot;
+    }
+
+    function drawField(fieldEl, mode) {
+      fieldEl.querySelectorAll('.position-slot, .field-empty').forEach(el => el.remove());
+      fieldEl.classList.toggle('dense', isDenseFormation());
+      if (!positions.length) {
+        const empty = document.createElement('div');
+        empty.className = 'field-empty';
+        empty.textContent = 'No positions picked yet. Choose a formation on the Team step.';
+        fieldEl.appendChild(empty);
+        return;
+      }
+      positions.forEach(position => fieldEl.appendChild(createPositionSlot(position, mode)));
+    }
+
+    function formationNoteText() {
+      const level = activeLevel();
+      const info = describeFormation(activeTeam().formation);
+      return `${levelLabel(level)}${info.shape ? ` · ${info.shape}` : ''} — ${info.text}.`;
+    }
+
+    function renderLineupField() {
+      drawField(els.lineupField, 'lineup');
+      els.lineupFormationNote.textContent = formationNoteText();
+      const filled = positions.filter(position => state.lineupAssignments[position.key]).length;
+      els.startGameBtn.disabled = filled === 0;
+      if (!positions.length) {
+        els.lineupWarning.style.display = 'block';
+        els.lineupWarning.textContent = 'This team has no positions picked. Go back to the Team step and choose a formation.';
+      } else if (filled === 0) {
+        els.lineupWarning.style.display = 'block';
+        els.lineupWarning.textContent = 'Assign at least one player to a position to start the game.';
+      } else if (filled < positions.length) {
+        els.lineupWarning.style.display = 'block';
+        els.lineupWarning.textContent = `Heads up: ${filled} of ${positions.length} positions filled. You can still start the game with open spots.`;
+      } else {
+        els.lineupWarning.style.display = 'none';
+      }
+    }
+
+    function renderRoster() {
+      const team = activeTeam();
+      const level = getLevel(team.level);
+      els.rosterCount.textContent = roster.length;
+      els.headerTeamName.textContent = team.name ? `${team.name} · ${levelLabel(level)} lineup and subs` : `${levelLabel(level)} sideline lineup and substitution tool`;
+
+      els.teamSelect.innerHTML = '';
+      teamsData.teams.forEach(t => {
+        const option = document.createElement('option');
+        option.value = t.id;
+        option.textContent = `${t.name || 'Untitled team'} · ${levelLabel(getLevel(t.level))} (${t.players.length})`;
+        option.selected = t.id === team.id;
+        els.teamSelect.appendChild(option);
+      });
+      if (document.activeElement !== els.teamNameInput) els.teamNameInput.value = team.name;
+
+      els.toSetupBtn.disabled = roster.length === 0;
+      els.clearPlayersBtn.disabled = roster.length === 0;
+      if (!roster.length) {
+        els.teamWarning.style.display = 'block';
+        els.teamWarning.textContent = 'Add at least one player to continue.';
+      } else if (roster.length < level.players) {
+        els.teamWarning.style.display = 'block';
+        els.teamWarning.textContent = `Heads up: ${level.players} players fill a full ${levelLabel(level)} field. This team has ${roster.length} — you can still continue.`;
+      } else {
+        els.teamWarning.style.display = 'none';
+      }
+
+      els.rosterList.innerHTML = '';
+      if (!roster.length) {
+        els.rosterList.innerHTML = `<div class="empty-state">No players yet. Add your first player above.</div>`;
+        return;
+      }
+
+      roster.forEach((player, index) => {
+        const row = document.createElement('div');
+        row.className = 'roster-row';
+        row.innerHTML = `
+          <span class="roster-num">${index + 1}</span>
+          <span class="roster-name">${escapeHtml(player)}</span>
+          <button class="btn btn-danger roster-delete" type="button" aria-label="Remove ${escapeHtml(player)}">Remove</button>
+        `;
+        row.querySelector('.roster-delete').addEventListener('click', () => removePlayer(player));
+        els.rosterList.appendChild(row);
+      });
+    }
+
+    function resetGameState() {
+      clearInterval(state.timer);
+      state.availablePlayers = new Set(roster);
+      state.lineupAssignments = Object.fromEntries(positions.map(p => [p.key, null]));
+      state.bench = [];
+      state.selectedLineupPlayer = null;
+      state.pendingSubs = [];
+      state.history = [];
+      state.totalSwapsMade = 0;
+      state.seconds = 0;
+      state.clockRunning = false;
+      state.clockAnchor = null;
+      state.period = 1;
+      state.game = null;
+      clearGameSelections();
+      board.strokes = [];
+      Store.del('activeGame').catch(() => {});
+    }
+
+    function switchTeam(id) {
+      teamsData.activeId = id;
+      roster = activeTeam().players.slice();
+      persistTeams();
+      positions = currentPositions();
+      resetGameState();
+      setFormationMessage('');
+    }
+
+    function addPlayersBulk(text) {
+      const names = String(text || '').split(/[\n,;]+/).map(cleanName).filter(Boolean);
+      if (!names.length) {
+        setRosterMessage('Type or paste at least one name.', 'error');
+        return;
+      }
+      let added = 0;
+      let skipped = 0;
+      names.forEach(name => {
+        if (roster.some(player => player.toLowerCase() === name.toLowerCase())) { skipped += 1; return; }
+        roster.push(name);
+        state.availablePlayers.add(name);
+        added += 1;
+      });
+      saveRoster();
+      els.bulkInput.value = '';
+      setRosterMessage(`${added} player${added === 1 ? '' : 's'} added${skipped ? `, ${skipped} duplicate${skipped === 1 ? '' : 's'} skipped` : ''}.`, added ? '' : 'error');
+      renderAll();
+    }
+
+    function setRosterMessage(text, tone) {
+      els.rosterMessage.textContent = text || '';
+      els.rosterMessage.style.display = text ? 'block' : 'none';
+      els.rosterMessage.className = `note roster-message ${tone === 'error' ? 'error' : ''}`;
+    }
+
+    function addPlayer(rawName) {
+      const name = cleanName(rawName);
+      if (!name) {
+        setRosterMessage('Enter a player name first.', 'error');
+        return;
+      }
+      if (roster.some(player => player.toLowerCase() === name.toLowerCase())) {
+        setRosterMessage(`${name} is already on the roster.`, 'error');
+        return;
+      }
+      roster.push(name);
+      state.availablePlayers.add(name);
+      saveRoster();
+      setRosterMessage(`${name} added to the roster.`);
+      els.newPlayerInput.value = '';
+      renderAll();
+    }
+
+    function removePlayer(name) {
+      if (!window.confirm(`Remove ${name} from the roster?`)) return;
+      roster = roster.filter(player => player !== name);
+      state.availablePlayers.delete(name);
+      Object.keys(state.lineupAssignments).forEach(key => {
+        if (state.lineupAssignments[key] === name) state.lineupAssignments[key] = null;
+      });
+      state.pendingSubs = state.pendingSubs.filter(swap => swap.outPlayer !== name && swap.inPlayer !== name);
+      if (state.selectedLineupPlayer === name) state.selectedLineupPlayer = null;
+      if (state.selectedBenchPlayer === name) state.selectedBenchPlayer = null;
+      saveRoster();
+      setRosterMessage(`${name} removed from the roster.`);
+      renderAll();
+    }
+
+    function buildBench() {
+      state.bench = getAvailablePlayersArray().filter(player => !Object.values(state.lineupAssignments).includes(player));
+    }
+
+    function renderGameField() {
+      drawField(els.gameField, 'game');
+      els.gameFormationNote.textContent = `${formationNoteText()} Tap a player card on the field to mark who is coming off.`;
+    }
+
+    function renderBench() {
+      buildBench();
+      els.benchCount.textContent = state.bench.length;
+      els.benchList.innerHTML = '';
+
+      if (!state.bench.length) {
+        els.benchList.innerHTML = `<div class="empty-state">No bench players available right now.</div>`;
+        return;
+      }
+
+      const comingOn = new Set(state.pendingSubs.map(swap => swap.inPlayer));
+      state.bench.forEach(player => {
+        const pending = comingOn.has(player);
+        const button = document.createElement('button');
+        button.className = `player-chip bench ${state.selectedBenchPlayer === player ? 'selected' : ''}`;
+        button.disabled = pending;
+        button.innerHTML = `<span>${escapeHtml(player)}</span><small>${pending ? 'Coming on' : initials(player)}</small>`;
+        button.addEventListener('click', () => {
+          if (!state.selectedFieldPosition || pending) return;
+          state.selectedBenchPlayer = state.selectedBenchPlayer === player ? null : player;
+          renderAll();
+        });
+        els.benchList.appendChild(button);
+      });
+    }
+
+    function renderGameSelection() {
+      const position = positions.find(p => p.key === state.selectedFieldPosition);
+      const outgoing = position ? state.lineupAssignments[position.key] : null;
+      const incoming = state.selectedBenchPlayer;
+      els.addSwapBtn.disabled = !(position && incoming);
+
+      if (!position && !incoming) {
+        els.gameSelectionBox.innerHTML = `<strong>No swap selected yet</strong><div class="muted">Choose a player on the field, then choose a player on the bench.</div>`;
+        return;
+      }
+
+      els.gameSelectionBox.innerHTML = `
+        <strong>${position ? position.label : 'Pick a position first'}</strong>
+        <div><span class="muted">Out:</span> ${outgoing ? escapeHtml(outgoing) : 'Open spot'}</div>
+        <div><span class="muted">In:</span> ${incoming ? escapeHtml(incoming) : '—'}</div>
+      `;
+    }
+
+    function renderPendingSubs() {
+      els.roundCount.textContent = state.pendingSubs.length;
+      els.confirmSubsBtn.disabled = state.pendingSubs.length === 0;
+      els.pendingList.innerHTML = '';
+
+      if (!state.pendingSubs.length) {
+        els.pendingList.innerHTML = `<div class="empty-state">No pending swaps yet.</div>`;
+        return;
+      }
+
+      state.pendingSubs.forEach((swap, index) => {
+        const card = document.createElement('div');
+        card.className = 'swap-card';
+        card.innerHTML = `
+          <header>
+            <span>Swap ${index + 1}</span>
+            <button class="remove" aria-label="Remove pending swap">✕</button>
+          </header>
+          <p><strong>${swap.positionLabel}</strong></p>
+          <p>${swap.outPlayer ? escapeHtml(swap.outPlayer) : 'Open spot'} → ${escapeHtml(swap.inPlayer)}</p>
+        `;
+        card.querySelector('.remove').addEventListener('click', () => {
+          state.pendingSubs.splice(index, 1);
+          renderAll();
+        });
+        els.pendingList.appendChild(card);
+      });
+    }
+
+    function renderHistory() {
+      els.totalSwapsDisplay.textContent = state.totalSwapsMade;
+      els.historyList.innerHTML = '';
+
+      if (!state.history.length) {
+        els.historyList.innerHTML = `<div class="empty-state">No substitutions yet.</div>`;
+        return;
+      }
+
+      state.history.slice().reverse().forEach((swap, reverseIndex) => {
+        const actualNumber = state.history.length - reverseIndex;
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.innerHTML = `
+          <strong>${swap.time} — Sub ${actualNumber}</strong>
+          <div>${swap.outPlayer ? `${escapeHtml(swap.outPlayer)} OUT, ` : 'Open spot filled — '}${escapeHtml(swap.inPlayer)} IN at ${swap.positionLabel}</div>
+        `;
+        els.historyList.appendChild(item);
+      });
+    }
+
+    function renderClock() {
+      const level = activeLevel();
+      const period = Math.min(state.period, level.periodCount);
+      const periodElapsed = Math.max(0, state.seconds - periodStartSeconds());
+      els.clockDisplay.textContent = formatTime(state.seconds);
+      els.clockFormat.textContent = `${level.periodName} ${period} of ${level.periodCount} · ${formatTime(periodElapsed)} / ${formatTime(level.periodMinutes * 60)}`;
+      els.clockToggleBtn.textContent = state.clockRunning ? '❚❚ Pause' : '▶ Start';
+      els.boardClock.textContent = `${level.periodName} ${period} · ${formatTime(state.seconds)}${state.clockRunning ? '' : ' · paused'}`;
+      const showPeriodBtn = Boolean(state.game) && state.period < level.periodCount;
+      els.periodBtn.hidden = !showPeriodBtn;
+      els.periodBtn.textContent = `End ${level.periodName} ${state.period}`;
+      els.endGameBtn.disabled = !state.game;
+    }
+
+    function renderTheme() {
+      document.documentElement.setAttribute('data-theme', state.theme);
+      els.themeIcon.innerHTML = state.theme === 'dark'
+        ? '<circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>'
+        : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+    }
+
+    /* ---------- Full-screen play board ---------- */
+    const BOARD_COLORS = [
+      { value: '#f0c75b', name: 'Yellow' },
+      { value: '#ffffff', name: 'White' },
+      { value: '#ff5a4e', name: 'Red' },
+      { value: '#4aa3ff', name: 'Blue' }
+    ];
+    const board = { open: false, tool: 'arrow', color: BOARD_COLORS[0].value, strokes: [], current: null, pointerId: null };
+    const boardCtx = els.boardCanvas.getContext('2d');
+
+    function openBoard() {
+      board.open = true;
+      els.boardOverlay.hidden = false;
+      document.body.style.overflow = 'hidden';
+      renderBoard();
+      const el = els.boardOverlay;
+      const request = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (request && !document.fullscreenElement) {
+        try {
+          const result = request.call(el);
+          if (result && result.catch) result.catch(() => {});
+        } catch (error) { /* fullscreen not allowed — the overlay already fills the window */ }
+      }
+    }
+
+    function closeBoard() {
+      board.open = false;
+      board.current = null;
+      els.boardOverlay.hidden = true;
+      document.body.style.overflow = '';
+      const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (fsEl && exit) {
+        try {
+          const result = exit.call(document);
+          if (result && result.catch) result.catch(() => {});
+        } catch (error) { /* ignore */ }
+      }
+      renderAll();
+    }
+
+    function renderBoardControls() {
+      document.querySelectorAll('[data-tool]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tool === board.tool);
+        btn.setAttribute('aria-pressed', String(btn.dataset.tool === board.tool));
+      });
+      els.boardSwatches.innerHTML = '';
+      BOARD_COLORS.forEach(color => {
+        const swatch = document.createElement('button');
+        swatch.type = 'button';
+        swatch.className = `swatch ${board.color === color.value ? 'active' : ''}`;
+        swatch.style.background = color.value;
+        swatch.setAttribute('aria-label', `${color.name} lines`);
+        swatch.setAttribute('aria-pressed', String(board.color === color.value));
+        swatch.addEventListener('click', () => { board.color = color.value; renderBoardControls(); });
+        els.boardSwatches.appendChild(swatch);
+      });
+      els.boardUndoBtn.disabled = board.strokes.length === 0;
+      els.boardClearBtn.disabled = board.strokes.length === 0;
+    }
+
+    function renderBoardTokens() {
+      els.boardField.querySelectorAll('.board-token, .field-empty').forEach(el => el.remove());
+      if (!positions.length) {
+        const empty = document.createElement('div');
+        empty.className = 'field-empty';
+        empty.textContent = 'No positions picked yet.';
+        els.boardField.insertBefore(empty, els.boardCanvas);
+        return;
+      }
+      positions.forEach(position => {
+        const player = state.lineupAssignments[position.key];
+        const token = document.createElement('div');
+        token.className = `board-token g-${position.row} ${player ? '' : 'open'}`;
+        token.style.left = `${position.x}%`;
+        token.style.top = `${position.y}%`;
+        token.innerHTML = `<span class="dot">${position.short}</span><span class="name">${player ? escapeHtml(player) : 'Open'}</span>`;
+        els.boardField.insertBefore(token, els.boardCanvas);
+      });
+    }
+
+    function sizeBoardCanvas() {
+      const canvas = els.boardCanvas;
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      if (!width || !height) return;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      boardCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      redrawBoard();
+    }
+
+    function drawBoardStroke(stroke, width, height) {
+      const pts = stroke.points.map(([x, y]) => [x * width, y * height]);
+      if (pts.length < 2) return;
+      const lineWidth = Math.max(3, Math.min(width, height) * 0.009);
+      const ctx = boardCtx;
+      ctx.save();
+      ctx.strokeStyle = stroke.color;
+      ctx.fillStyle = stroke.color;
+      ctx.lineWidth = lineWidth;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.shadowColor = 'rgba(0,0,0,0.35)';
+      ctx.shadowBlur = 3;
+      ctx.setLineDash(stroke.tool === 'run' ? [lineWidth * 3, lineWidth * 2.4] : []);
+
+      // Stop the line short of the tip so the arrowhead stays crisp
+      const end = pts[pts.length - 1];
+      let back = pts[0];
+      for (let i = pts.length - 2; i >= 0; i -= 1) {
+        if (Math.hypot(end[0] - pts[i][0], end[1] - pts[i][1]) >= lineWidth * 4) { back = pts[i]; break; }
+      }
+      const angle = Math.atan2(end[1] - back[1], end[0] - back[0]);
+      const head = lineWidth * 4.2;
+      const hasHead = stroke.tool !== 'pen';
+      const lineEnd = hasHead ? [end[0] - Math.cos(angle) * head * 0.6, end[1] - Math.sin(angle) * head * 0.6] : end;
+
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length - 1; i += 1) {
+        const midX = (pts[i][0] + pts[i + 1][0]) / 2;
+        const midY = (pts[i][1] + pts[i + 1][1]) / 2;
+        ctx.quadraticCurveTo(pts[i][0], pts[i][1], midX, midY);
+      }
+      ctx.lineTo(lineEnd[0], lineEnd[1]);
+      ctx.stroke();
+
+      if (hasHead) {
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(end[0], end[1]);
+        ctx.lineTo(end[0] - Math.cos(angle - 0.45) * head, end[1] - Math.sin(angle - 0.45) * head);
+        ctx.lineTo(end[0] - Math.cos(angle + 0.45) * head, end[1] - Math.sin(angle + 0.45) * head);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function redrawBoard() {
+      const width = els.boardCanvas.clientWidth;
+      const height = els.boardCanvas.clientHeight;
+      boardCtx.clearRect(0, 0, width, height);
+      board.strokes.forEach(stroke => drawBoardStroke(stroke, width, height));
+      if (board.current) drawBoardStroke(board.current, width, height);
+    }
+
+    function renderBoard() {
+      renderBoardControls();
+      renderBoardTokens();
+      renderClock();
+      sizeBoardCanvas();
+    }
+
+    function boardPoint(event) {
+      const rect = els.boardCanvas.getBoundingClientRect();
+      return [
+        Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width)),
+        Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height))
+      ];
+    }
+
+    function strokeLengthPx(stroke) {
+      const w = els.boardCanvas.clientWidth;
+      const h = els.boardCanvas.clientHeight;
+      let total = 0;
+      for (let i = 1; i < stroke.points.length; i += 1) {
+        total += Math.hypot((stroke.points[i][0] - stroke.points[i - 1][0]) * w, (stroke.points[i][1] - stroke.points[i - 1][1]) * h);
+      }
+      return total;
+    }
+
+    els.boardCanvas.addEventListener('pointerdown', event => {
+      if (board.current) return;
+      event.preventDefault();
+      els.boardCanvas.setPointerCapture(event.pointerId);
+      board.pointerId = event.pointerId;
+      board.current = { tool: board.tool, color: board.color, points: [boardPoint(event)] };
+    });
+
+    els.boardCanvas.addEventListener('pointermove', event => {
+      if (!board.current || event.pointerId !== board.pointerId) return;
+      event.preventDefault();
+      const point = boardPoint(event);
+      const last = board.current.points[board.current.points.length - 1];
+      const w = els.boardCanvas.clientWidth;
+      const h = els.boardCanvas.clientHeight;
+      if (Math.hypot((point[0] - last[0]) * w, (point[1] - last[1]) * h) < 2) return;
+      board.current.points.push(point);
+      redrawBoard();
+    });
+
+    function finishStroke(event) {
+      if (!board.current || event.pointerId !== board.pointerId) return;
+      if (strokeLengthPx(board.current) >= 10) board.strokes.push(board.current);
+      board.current = null;
+      board.pointerId = null;
+      redrawBoard();
+      renderBoardControls();
+    }
+    els.boardCanvas.addEventListener('pointerup', finishStroke);
+    els.boardCanvas.addEventListener('pointercancel', finishStroke);
+
+    document.querySelectorAll('[data-tool]').forEach(btn => {
+      btn.addEventListener('click', () => { board.tool = btn.dataset.tool; renderBoardControls(); });
+    });
+    els.boardUndoBtn.addEventListener('click', () => { board.strokes.pop(); redrawBoard(); renderBoardControls(); });
+    els.boardClearBtn.addEventListener('click', () => { board.strokes = []; redrawBoard(); renderBoardControls(); });
+    els.boardBackBtn.addEventListener('click', closeBoard);
+    els.openBoardBtn.addEventListener('click', openBoard);
+    els.openBoardBtn2.addEventListener('click', openBoard);
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && board.open && !document.fullscreenElement) closeBoard();
+    });
+    if (window.ResizeObserver) {
+      new ResizeObserver(() => { if (board.open) sizeBoardCanvas(); }).observe(els.boardField);
+    }
+    window.addEventListener('resize', () => { if (board.open) sizeBoardCanvas(); });
+
+    /* ---------- Toast + choice dialog ---------- */
+    let toastTimer = null;
+    function showToast(message, tone) {
+      els.toast.textContent = message;
+      els.toast.className = `toast show ${tone === 'error' ? 'error' : ''}`;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { els.toast.className = 'toast'; }, tone === 'error' ? 5000 : 2800);
+    }
+
+    let modalResolve = null;
+    function showChoice({ title, body, buttons }) {
+      if (modalResolve) modalResolve('cancel');
+      els.modalTitle.textContent = title;
+      els.modalBody.innerHTML = body || '';
+      els.modalActions.innerHTML = '';
+      return new Promise(resolve => {
+        modalResolve = resolve;
+        buttons.forEach(button => {
+          const el = document.createElement('button');
+          el.type = 'button';
+          el.className = `btn btn-${button.kind || 'secondary'}`;
+          el.textContent = button.label;
+          el.addEventListener('click', () => closeChoice(button.value));
+          els.modalActions.appendChild(el);
+        });
+        els.modalBackdrop.hidden = false;
+        const first = els.modalActions.querySelector('.btn-primary') || els.modalActions.firstChild;
+        if (first) first.focus();
+      });
+    }
+    function closeChoice(value) {
+      els.modalBackdrop.hidden = true;
+      const resolve = modalResolve;
+      modalResolve = null;
+      if (resolve) resolve(value);
+    }
+    els.modalBackdrop.addEventListener('click', event => {
+      if (event.target === els.modalBackdrop) closeChoice('cancel');
+    });
+
+    /* ---------- Game clock (based on wall time, so a sleeping tablet doesn't lose minutes) ---------- */
+    function periodStartSeconds() {
+      const periods = state.game ? state.game.periods : [];
+      return periods.length ? periods[periods.length - 1].endSeconds : 0;
+    }
+
+    function tickClock() {
+      if (!state.clockRunning) return;
+      const seconds = Math.max(0, Math.floor((Date.now() - state.clockAnchor) / 1000));
+      if (seconds === state.seconds) return;
+      state.seconds = seconds;
+      renderClock();
+      renderPlayingTime();
+      if (seconds % 5 === 0) saveActiveGameSoon();
+    }
+
+    function startClock() {
+      if (state.clockRunning) return;
+      state.clockRunning = true;
+      state.clockAnchor = Date.now() - state.seconds * 1000;
+      clearInterval(state.timer);
+      state.timer = setInterval(tickClock, 250);
+      renderClock();
+      saveActiveGameSoon();
+    }
+
+    function pauseClock() {
+      if (!state.clockRunning) return;
+      state.seconds = Math.max(0, Math.floor((Date.now() - state.clockAnchor) / 1000));
+      state.clockRunning = false;
+      clearInterval(state.timer);
+      renderClock();
+      saveActiveGameSoon();
+    }
+
+    /* ---------- Game tracking ---------- */
+    function gameHasProgress() {
+      return Boolean(state.game) && (state.seconds > 0 || state.history.length > 0);
+    }
+
+    function newGame() {
+      const team = activeTeam();
+      return {
+        id: 'g' + makeId(),
+        teamId: team.id,
+        startedAt: new Date().toISOString(),
+        level: team.level,
+        available: getAvailablePlayersArray(),
+        snapshots: [],
+        positionLabels: {},
+        periods: []
+      };
+    }
+
+    /* Record who is on the field whenever it changes. Minutes are worked out from these snapshots,
+       so subs, formation changes and lineup edits all count correctly. */
+    function trackLineup() {
+      if (!state.game) return;
+      positions.forEach(p => { state.game.positionLabels[p.key] = { label: p.label, short: p.short, row: p.row }; });
+      const lineup = {};
+      positions.forEach(p => { if (state.lineupAssignments[p.key]) lineup[p.key] = state.lineupAssignments[p.key]; });
+      const snaps = state.game.snapshots;
+      const last = snaps[snaps.length - 1];
+      if (last && JSON.stringify(last.lineup) === JSON.stringify(lineup)) return;
+      if (last && last.t === state.seconds) last.lineup = lineup;
+      else snaps.push({ t: state.seconds, lineup });
+      saveActiveGameSoon();
+    }
+
+    function computePlayingSeconds(snapshots, endSeconds) {
+      const totals = {};
+      snapshots.forEach((snap, index) => {
+        const end = index + 1 < snapshots.length ? snapshots[index + 1].t : endSeconds;
+        const duration = Math.max(0, end - snap.t);
+        Object.values(snap.lineup).forEach(player => {
+          if (player) totals[player] = (totals[player] || 0) + duration;
+        });
+      });
+      return totals;
+    }
+
+    function positionOfPlayer(player) {
+      const position = positions.find(p => state.lineupAssignments[p.key] === player);
+      return position ? position.short : null;
+    }
+
+    function buildGameRecord() {
+      pauseClock();
+      trackLineup();
+      const game = state.game;
+      const team = activeTeam();
+      const level = getLevel(game.level || team.level);
+      const totalSeconds = state.seconds;
+      const playersSeen = new Set([...game.available, ...getAvailablePlayersArray()]);
+      game.snapshots.forEach(snap => Object.values(snap.lineup).forEach(player => player && playersSeen.add(player)));
+      const playingSeconds = computePlayingSeconds(game.snapshots, totalSeconds);
+      playersSeen.forEach(player => { playingSeconds[player] = playingSeconds[player] || 0; });
+      return {
+        id: game.id,
+        formatVersion: 1,
+        teamId: team.id,
+        teamName: team.name,
+        startedAt: game.startedAt,
+        endedAt: new Date().toISOString(),
+        level: level.key,
+        levelLabel: levelLabel(level),
+        formationShape: describeFormation(team.formation).shape,
+        positionLabels: game.positionLabels,
+        available: [...playersSeen],
+        absent: roster.filter(player => !playersSeen.has(player)),
+        startingLineup: game.snapshots.length ? game.snapshots[0].lineup : {},
+        finalLineup: game.snapshots.length ? game.snapshots[game.snapshots.length - 1].lineup : {},
+        subs: state.history.slice(),
+        periods: game.periods.slice(),
+        totalSeconds,
+        snapshots: game.snapshots,
+        playingSeconds
+      };
+    }
+
+    async function saveCurrentGame() {
+      const record = buildGameRecord();
+      try {
+        await Store.putGames([record]);
+      } catch (error) {
+        reportSaveError(error);
+        throw error;
+      }
+      gamesCache = gamesCache.filter(g => g.id !== record.id).concat(record);
+      return record;
+    }
+
+    let activeSaveTimer = null;
+    function activeGameSnapshot() {
+      return {
+        teamId: activeTeam().id,
+        game: state.game,
+        lineupAssignments: state.lineupAssignments,
+        available: [...state.availablePlayers],
+        history: state.history,
+        pendingSubs: state.pendingSubs,
+        totalSwapsMade: state.totalSwapsMade,
+        seconds: state.clockRunning ? Math.floor((Date.now() - state.clockAnchor) / 1000) : state.seconds,
+        clockRunning: state.clockRunning,
+        clockAnchor: state.clockAnchor,
+        period: state.period,
+        savedAt: Date.now()
+      };
+    }
+    function saveActiveGameNow() {
+      clearTimeout(activeSaveTimer);
+      activeSaveTimer = null;
+      if (!state.game) return;
+      Store.set('activeGame', activeGameSnapshot()).catch(reportSaveError);
+    }
+    function saveActiveGameSoon() {
+      if (!state.game) return;
+      clearTimeout(activeSaveTimer);
+      activeSaveTimer = setTimeout(saveActiveGameNow, 400);
+    }
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveActiveGameNow(); });
+    window.addEventListener('pagehide', saveActiveGameNow);
+
+    function restoreActiveGame(saved) {
+      if (!saved || !saved.game || !teamsData.teams.some(t => t.id === saved.teamId)) return false;
+      teamsData.activeId = saved.teamId;
+      roster = activeTeam().players.slice();
+      positions = currentPositions();
+      state.game = saved.game;
+      state.availablePlayers = new Set(saved.available || roster);
+      state.lineupAssignments = Object.fromEntries(positions.map(p => [p.key, (saved.lineupAssignments || {})[p.key] || null]));
+      state.history = saved.history || [];
+      state.pendingSubs = saved.pendingSubs || [];
+      state.totalSwapsMade = saved.totalSwapsMade || 0;
+      state.period = saved.period || 1;
+      state.seconds = saved.seconds || 0;
+      state.clockRunning = false;
+      // Keep the clock running if the app was only closed briefly (screen lock, app switch).
+      const recent = saved.savedAt && Date.now() - saved.savedAt < 3 * 60 * 60 * 1000;
+      if (saved.clockRunning && saved.clockAnchor && recent) {
+        state.clockAnchor = saved.clockAnchor;
+        state.seconds = Math.max(0, Math.floor((Date.now() - saved.clockAnchor) / 1000));
+        state.clockRunning = true;
+        state.timer = setInterval(tickClock, 250);
+      }
+      return true;
+    }
+
+    /* Ask what to do with a game that has started before something would wipe it. */
+    async function resolveGameInProgress(message) {
+      if (!gameHasProgress()) return true;
+      const choice = await showChoice({
+        title: 'Game in progress',
+        body: `<p>${escapeHtml(message)}</p><p>${formatTime(state.seconds)} on the clock · ${state.history.length} sub${state.history.length === 1 ? '' : 's'} so far.</p>`,
+        buttons: [
+          { label: 'Cancel', value: 'cancel', kind: 'secondary' },
+          { label: 'Discard Game', value: 'discard', kind: 'danger' },
+          { label: 'Save to History', value: 'save', kind: 'primary' }
+        ]
+      });
+      if (choice === 'save') {
+        try { await saveCurrentGame(); } catch (error) { return false; }
+        showToast('Game saved to history');
+        return true;
+      }
+      return choice === 'discard';
+    }
+
+    async function endGame() {
+      if (!state.game) return;
+      const choice = await showChoice({
+        title: 'End and save this game?',
+        body: `<p>Saves the lineups, subs and each player's minutes (${formatTime(state.seconds)} on the clock) to ${escapeHtml(activeTeam().name)}'s game history.</p>`,
+        buttons: [
+          { label: 'Keep Playing', value: 'cancel', kind: 'secondary' },
+          { label: 'Save Game', value: 'save', kind: 'primary' }
+        ]
+      });
+      if (choice !== 'save') return;
+      let record;
+      try { record = await saveCurrentGame(); } catch (error) { return; }
+      resetGameState();
+      state.historyGameId = record.id;
+      showToast('Game saved to history');
+      setScreen('history');
+    }
+
+    /* ---------- Playing time ---------- */
+    function renderPlayingTime() {
+      const level = activeLevel();
+      const fullGame = level.total * 60;
+      const halfGame = fullGame / 2;
+      const players = getAvailablePlayersArray();
+      els.playingTimeNote.textContent = `Minutes on the field from the game clock. THJSL's 50% rule means ${formatTime(halfGame)} of a full ${level.total}-minute game. Fewest minutes first.`;
+      if (!state.game || !players.length) {
+        els.playingTimeList.innerHTML = `<div class="empty-state">Start the game to track minutes.</div>`;
+        return;
+      }
+      const secs = computePlayingSeconds(state.game.snapshots, state.seconds);
+      const rows = players
+        .map(player => ({ player, seconds: secs[player] || 0, position: positionOfPlayer(player) }))
+        .sort((a, b) => a.seconds - b.seconds || a.player.localeCompare(b.player));
+      els.playingTimeList.innerHTML = rows.map(row => {
+        const met = row.seconds >= halfGame;
+        const pct = Math.min(100, (row.seconds / halfGame) * 100);
+        const chip = met
+          ? `<span class="chip ok">50% ✓</span>`
+          : `<span class="chip warn">${formatTime(Math.ceil(halfGame - row.seconds))} to 50%</span>`;
+        return `
+          <div class="time-row">
+            <span class="who">${escapeHtml(row.player)}<small>${row.position ? `On field · ${row.position}` : 'Bench'}</small></span>
+            <span class="secs">${formatTime(row.seconds)}</span>
+            <div class="meta"><div class="bar ${met ? '' : 'low'}"><span style="width:${pct}%"></span></div>${chip}</div>
+          </div>`;
+      }).join('');
+    }
+
+    /* ---------- History ---------- */
+    function teamGames(teamId = activeTeam().id) {
+      return gamesCache
+        .filter(game => game.teamId === teamId)
+        .sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)));
+    }
+
+    function formatGameDate(iso) {
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return 'Unknown date';
+      return `${date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} · ${date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+    }
+
+    function minutesLabel(seconds) {
+      return formatTime(Math.round(seconds || 0));
+    }
+
+    function underHalf(game) {
+      const total = game.totalSeconds || 0;
+      if (!total) return [];
+      return Object.entries(game.playingSeconds || {}).filter(([, s]) => s < total / 2).map(([p]) => p);
+    }
+
+    const LINEUP_ORDER = ['goalkeeper', 'leftBack', 'centerBackL', 'centerBackR', 'rightBack', 'leftMid', 'centerMid', 'rightMid', 'leftWing', 'centerForward', 'rightWing'];
+    function lineupListHtml(game, lineup) {
+      const keys = Object.keys(lineup || {}).sort((a, b) => LINEUP_ORDER.indexOf(a) - LINEUP_ORDER.indexOf(b));
+      if (!keys.length) return `<div class="empty-state">No lineup recorded.</div>`;
+      return `<ul class="lineup-list">${keys.map(key => {
+        const info = (game.positionLabels || {})[key] || POSITION_CATALOG.find(p => p.key === key) || { label: key };
+        return `<li><b>${escapeHtml(info.label)}</b><span>${escapeHtml(lineup[key])}</span></li>`;
+      }).join('')}</ul>`;
+    }
+
+    function renderHistoryScreen() {
+      const team = activeTeam();
+      const games = teamGames();
+      const detail = state.historyGameId ? games.find(g => g.id === state.historyGameId) : null;
+      els.historyHeroText.textContent = `${team.name} · ${games.length} saved game${games.length === 1 ? '' : 's'}`;
+      els.historyListView.hidden = Boolean(detail);
+      els.historyDetailView.hidden = !detail;
+      if (detail) { renderGameDetail(detail); return; }
+
+      // Season totals
+      const stats = {};
+      games.forEach(game => {
+        const total = game.totalSeconds || 0;
+        Object.entries(game.playingSeconds || {}).forEach(([player, seconds]) => {
+          const s = stats[player] || (stats[player] = { games: 0, seconds: 0, pctSum: 0, under: 0 });
+          s.games += 1;
+          s.seconds += seconds;
+          const pct = total ? seconds / total : 0;
+          s.pctSum += pct;
+          if (total && pct < 0.5) s.under += 1;
+        });
+      });
+      const rows = Object.entries(stats)
+        .map(([player, s]) => ({ player, ...s, avg: s.games ? s.pctSum / s.games : 0 }))
+        .sort((a, b) => a.avg - b.avg || a.player.localeCompare(b.player));
+      els.seasonTable.innerHTML = rows.length ? `
+        <div class="table-scroll"><table class="season-table">
+          <thead><tr><th>Player</th><th class="num">Games</th><th class="num">Min</th><th>Avg</th><th class="num" title="Games under 50%">&lt;50%</th></tr></thead>
+          <tbody>${rows.map(r => `
+            <tr>
+              <td>${escapeHtml(r.player)}</td>
+              <td class="num">${r.games}</td>
+              <td class="num">${Math.round(r.seconds / 60)}</td>
+              <td><div style="display:flex;align-items:center;gap:8px;"><div class="bar ${r.avg < 0.5 ? 'low' : ''}"><span style="width:${Math.min(100, r.avg * 100)}%"></span></div><span class="num">${Math.round(r.avg * 100)}%</span></div></td>
+              <td class="num">${r.under ? `<span class="chip warn">${r.under}</span>` : '<span class="chip ok">0</span>'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table></div>` : `<div class="empty-state">No saved games yet. Finish a game with “End &amp; Save Game” and it shows up here.</div>`;
+
+      els.gameList.innerHTML = '';
+      if (!games.length) {
+        els.gameList.innerHTML = `<div class="empty-state">No saved games yet.</div>`;
+        return;
+      }
+      games.forEach(game => {
+        const under = underHalf(game);
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'game-card';
+        card.innerHTML = `
+          <div class="row"><strong>${formatGameDate(game.startedAt)}</strong>${under.length ? `<span class="chip warn">${under.length} under 50%</span>` : '<span class="chip ok">Everyone 50%+</span>'}</div>
+          <div class="muted">${escapeHtml(game.levelLabel || '')}${game.formationShape ? ` · ${escapeHtml(game.formationShape)}` : ''} · ${minutesLabel(game.totalSeconds)} played · ${(game.subs || []).length} subs · ${(game.available || []).length} players</div>`;
+        card.addEventListener('click', () => {
+          state.historyGameId = game.id;
+          renderHistoryScreen();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        els.gameList.appendChild(card);
+      });
+    }
+
+    function renderGameDetail(game) {
+      const total = game.totalSeconds || 0;
+      const under = underHalf(game);
+      const minutesRows = Object.entries(game.playingSeconds || {})
+        .sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0]))
+        .map(([player, seconds]) => {
+          const pct = total ? seconds / total : 0;
+          return `
+            <div class="time-row">
+              <span class="who">${escapeHtml(player)}</span>
+              <span class="secs">${minutesLabel(seconds)}</span>
+              <div class="meta"><div class="bar ${pct < 0.5 ? 'low' : ''}"><span style="width:${Math.min(100, pct * 100)}%"></span></div>
+              <span class="chip ${pct < 0.5 ? 'warn' : 'ok'}">${Math.round(pct * 100)}%</span></div>
+            </div>`;
+        }).join('');
+      const subs = (game.subs || []).map((swap, i) => `
+        <div class="history-item"><strong>${escapeHtml(swap.time || '')} — Sub ${i + 1}</strong>
+        <div>${swap.outPlayer ? `${escapeHtml(swap.outPlayer)} OUT, ` : 'Open spot filled — '}${escapeHtml(swap.inPlayer)} IN at ${escapeHtml(swap.positionLabel || '')}</div></div>`).join('');
+
+      els.historyDetailView.innerHTML = `
+        <div class="toolbar">
+          <button class="btn btn-secondary" type="button" data-action="back">← All Games</button>
+          <button class="btn btn-danger" type="button" data-action="delete">Delete Game</button>
+        </div>
+        <div class="panel" style="margin-bottom:16px;">
+          <h3>${formatGameDate(game.startedAt)}</h3>
+          <p class="note">${escapeHtml(game.levelLabel || '')}${game.formationShape ? ` · ${escapeHtml(game.formationShape)}` : ''}</p>
+          <div class="sub-stats" style="margin-bottom:0;">
+            <div class="stat-card"><label>Game Time</label><strong>${minutesLabel(total)}</strong></div>
+            <div class="stat-card"><label>Subs</label><strong>${(game.subs || []).length}</strong></div>
+            <div class="stat-card"><label>Players</label><strong>${(game.available || []).length}</strong></div>
+            <div class="stat-card"><label>Under 50%</label><strong>${under.length}</strong></div>
+          </div>
+        </div>
+        <div class="detail-grid two">
+          <div class="panel">
+            <h3>Minutes Played</h3>
+            <p class="note">Share of the ${minutesLabel(total)} recorded on the game clock. Under 50% is flagged.</p>
+            <div class="time-list">${minutesRows || '<div class="empty-state">No minutes recorded.</div>'}</div>
+            ${(game.absent || []).length ? `<p class="note" style="margin-top:12px;">Out today: ${game.absent.map(escapeHtml).join(', ')}</p>` : ''}
+          </div>
+          <div class="detail-grid">
+            <div class="panel"><h3>Starting Lineup</h3>${lineupListHtml(game, game.startingLineup)}</div>
+            <div class="panel"><h3>Final Lineup</h3>${lineupListHtml(game, game.finalLineup)}</div>
+            <div class="panel"><h3>Substitutions</h3><div class="history-list">${subs || '<div class="empty-state">No substitutions.</div>'}</div></div>
+          </div>
+        </div>`;
+      els.historyDetailView.querySelector('[data-action="back"]').addEventListener('click', () => {
+        state.historyGameId = null;
+        renderHistoryScreen();
+      });
+      els.historyDetailView.querySelector('[data-action="delete"]').addEventListener('click', async () => {
+        const choice = await showChoice({
+          title: 'Delete this game?',
+          body: `<p>${escapeHtml(formatGameDate(game.startedAt))} will be removed from history and season totals. This can't be undone unless you have a backup.</p>`,
+          buttons: [{ label: 'Cancel', value: 'cancel' }, { label: 'Delete Game', value: 'delete', kind: 'danger' }]
+        });
+        if (choice !== 'delete') return;
+        try { await Store.deleteGames([game.id]); } catch (error) { reportSaveError(error); return; }
+        gamesCache = gamesCache.filter(g => g.id !== game.id);
+        state.historyGameId = null;
+        showToast('Game deleted');
+        renderAll();
+      });
+    }
+
+    /* ---------- Backup, restore, share ---------- */
+    const BACKUP_APP_ID = 'soccer-sub-manager';
+    const BACKUP_FORMAT = 1;
+    const BACKUP_REMIND_DAYS = 14;
+
+    function daysSince(timestamp) {
+      return timestamp ? Math.floor((Date.now() - timestamp) / 86400000) : null;
+    }
+
+    function renderDataPanel() {
+      const games = teamGames();
+      const gamesSinceBackup = gamesCache.filter(g => !lastBackupAt || Date.parse(g.endedAt) > lastBackupAt).length;
+      const days = daysSince(lastBackupAt);
+      const storageText = {
+        indexeddb: storageProtected
+          ? 'Saved in this tablet’s app database, protected from automatic cleanup.'
+          : 'Saved in this tablet’s app database. The browser can still clear it if the tablet runs low on space, so keep a backup.',
+        local: 'Saved in basic browser storage. Keep a backup.',
+        memory: 'This browser isn’t letting the app save. Changes disappear when you close it, so back up before you leave.'
+      }[Store.mode];
+      els.dataStatus.innerHTML = `
+        <div><strong>${games.length}</strong> saved game${games.length === 1 ? '' : 's'} for ${escapeHtml(activeTeam().name)} · <strong>${gamesCache.length}</strong> across all teams</div>
+        <div>${storageText}</div>
+        <div>Last backup: <strong>${lastBackupAt ? (days === 0 ? 'today' : `${days} day${days === 1 ? '' : 's'} ago`) : 'never'}</strong></div>`;
+      const needsReminder = gamesCache.length > 0 && (!lastBackupAt || days >= BACKUP_REMIND_DAYS || gamesSinceBackup >= 3);
+      els.backupReminder.style.display = needsReminder ? 'block' : 'none';
+      els.backupReminder.textContent = !lastBackupAt
+        ? 'You haven’t backed up yet. Save a backup file so your teams and game history survive a lost or reset tablet.'
+        : `${gamesSinceBackup} game${gamesSinceBackup === 1 ? '' : 's'} saved since your last backup${days >= BACKUP_REMIND_DAYS ? ` ${days} days ago` : ''}. Time to back up again.`;
+    }
+
+    function backupFileName(label) {
+      const date = new Date().toISOString().slice(0, 10);
+      const safe = label.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
+      return `SoccerSubs-${safe}-${date}.json`;
+    }
+
+    function buildBackup(kind, teams, games) {
+      return {
+        app: BACKUP_APP_ID,
+        formatVersion: BACKUP_FORMAT,
+        kind,
+        exportedAt: new Date().toISOString(),
+        activeId: teamsData.activeId,
+        teams,
+        games
+      };
+    }
+
+    async function deliverFile(filename, text) {
+      const blob = new Blob([text], { type: 'application/json' });
+      try {
+        const file = new File([blob], filename, { type: 'application/json' });
+        if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: filename });
+          return 'shared';
+        }
+      } catch (error) {
+        if (error && error.name === 'AbortError') return 'cancelled';
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      return 'downloaded';
+    }
+
+    async function backUpAll() {
+      const backup = buildBackup('full', teamsData.teams, gamesCache);
+      const result = await deliverFile(backupFileName('Backup'), JSON.stringify(backup, null, 2));
+      if (result === 'cancelled') return;
+      lastBackupAt = Date.now();
+      Store.set('lastBackupAt', lastBackupAt).catch(reportSaveError);
+      showToast(result === 'shared' ? 'Backup ready to save or send' : 'Backup file downloaded');
+      renderDataPanel();
+    }
+
+    async function shareTeam() {
+      const team = activeTeam();
+      const backup = buildBackup('team', [team], teamGames(team.id));
+      const result = await deliverFile(backupFileName(`Team-${team.name}`), JSON.stringify(backup, null, 2));
+      if (result !== 'cancelled') showToast(`${team.name} file ready to share`);
+    }
+
+    function parseBackup(text) {
+      let data;
+      try { data = JSON.parse(text); } catch (error) { throw new Error('That file isn’t a Soccer Sub Manager backup.'); }
+      if (!data || data.app !== BACKUP_APP_ID || !Array.isArray(data.teams)) throw new Error('That file isn’t a Soccer Sub Manager backup.');
+      if (data.formatVersion > BACKUP_FORMAT) throw new Error('This backup was made by a newer version of the app. Update the app first.');
+      const normalized = normalizeTeamsData({ activeId: data.activeId, teams: data.teams });
+      if (!normalized) throw new Error('This backup has no teams in it.');
+      const teamIds = new Set(normalized.teams.map(t => t.id));
+      const games = (Array.isArray(data.games) ? data.games : [])
+        .filter(g => g && typeof g.id === 'string' && teamIds.has(g.teamId) && g.playingSeconds && typeof g.playingSeconds === 'object');
+      return { kind: data.kind === 'team' ? 'team' : 'full', exportedAt: data.exportedAt, activeId: normalized.activeId, teams: normalized.teams, games };
+    }
+
+    async function restoreFromFile(file) {
+      if (gameHasProgress()) {
+        showToast('Finish or reset the current game before restoring.', 'error');
+        return;
+      }
+      let backup;
+      try { backup = parseBackup(await file.text()); } catch (error) { showToast(error.message, 'error'); return; }
+      const exported = backup.exportedAt ? new Date(backup.exportedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'an unknown date';
+      const teamNames = backup.teams.map(t => escapeHtml(t.name)).join(', ');
+      const buttons = [{ label: 'Cancel', value: 'cancel' }];
+      if (backup.kind === 'full') buttons.push({ label: 'Replace Everything', value: 'replace', kind: 'danger' });
+      buttons.push({ label: backup.kind === 'team' ? 'Add to This Tablet' : 'Merge', value: 'merge', kind: 'primary' });
+      const choice = await showChoice({
+        title: backup.kind === 'team' ? 'Add shared team?' : 'Restore backup?',
+        body: `<p><strong>${backup.teams.length} team${backup.teams.length === 1 ? '' : 's'}</strong> (${teamNames}) and <strong>${backup.games.length} game${backup.games.length === 1 ? '' : 's'}</strong>, saved ${exported}.</p>
+          <p><strong>Merge</strong> adds teams and games that aren’t on this tablet, and adds any missing players to teams you already have.${backup.kind === 'full' ? ' <strong>Replace Everything</strong> wipes this tablet and restores the backup exactly.' : ''}</p>`,
+        buttons
+      });
+      if (choice === 'cancel') return;
+
+      let nextTeams;
+      let nextGames;
+      if (choice === 'replace') {
+        nextTeams = { activeId: backup.activeId, teams: backup.teams };
+        nextGames = backup.games;
+      } else {
+        nextTeams = JSON.parse(JSON.stringify(teamsData));
+        // Match teams by ID, or by name when the same team was set up separately on each tablet.
+        const idMap = {};
+        backup.teams.forEach(incoming => {
+          const sameName = t => t.name.trim().toLowerCase() === incoming.name.trim().toLowerCase();
+          const existing = nextTeams.teams.find(t => t.id === incoming.id) || nextTeams.teams.find(sameName);
+          if (!existing) { nextTeams.teams.push(incoming); idMap[incoming.id] = incoming.id; return; }
+          idMap[incoming.id] = existing.id;
+          incoming.players.forEach(player => {
+            if (!existing.players.some(p => p.toLowerCase() === player.toLowerCase())) existing.players.push(player);
+          });
+        });
+        nextTeams.activeId = idMap[backup.teams[0].id];
+        const known = new Set(gamesCache.map(g => g.id));
+        nextGames = gamesCache.concat(backup.games
+          .filter(g => !known.has(g.id))
+          .map(g => ({ ...g, teamId: idMap[g.teamId] || g.teamId })));
+      }
+      try {
+        await Store.set('teams', nextTeams);
+        await Store.replaceGames(nextGames);
+      } catch (error) { reportSaveError(error); return; }
+      teamsData = normalizeTeamsData(nextTeams);
+      gamesCache = nextGames;
+      roster = activeTeam().players.slice();
+      positions = currentPositions();
+      resetGameState();
+      showToast(choice === 'replace' ? 'Backup restored' : 'Backup merged');
+      renderAll();
+    }
+
+    async function requestProtectedStorage() {
+      try {
+        if (navigator.storage && navigator.storage.persisted) {
+          if (await navigator.storage.persisted()) return true;
+          if (navigator.storage.persist) return await navigator.storage.persist();
+        }
+      } catch (error) { /* not supported */ }
+      return false;
+    }
+
+    function renderAll() {
+      trackLineup();
+      renderTheme();
+      renderFormation();
+      renderSetup();
+      renderLineupPlayers();
+      renderLineupField();
+      renderGameField();
+      renderBench();
+      renderGameSelection();
+      renderPendingSubs();
+      renderHistory();
+      renderClock();
+      renderRoster();
+      renderPlayingTime();
+      renderDataPanel();
+      renderHistoryScreen();
+      els.startGameBtn.textContent = gameHasProgress() ? 'Back to Game →' : 'Start Game →';
+      saveActiveGameSoon();
+    }
+
+    function clearGameSelections() {
+      state.selectedFieldPosition = null;
+      state.selectedBenchPlayer = null;
+    }
+
+    els.selectAllBtn.addEventListener('click', () => {
+      if (state.availablePlayers.size === roster.length) {
+        state.availablePlayers = new Set();
+      } else {
+        state.availablePlayers = new Set(roster);
+      }
+      state.lineupAssignments = Object.fromEntries(positions.map(p => [p.key, state.lineupAssignments[p.key] && state.availablePlayers.has(state.lineupAssignments[p.key]) ? state.lineupAssignments[p.key] : null]));
+      renderAll();
+    });
+
+    els.rosterBtn.addEventListener('click', () => {
+      setRosterMessage('');
+      setScreen('team');
+    });
+
+    els.backToTeamBtn.addEventListener('click', () => setScreen('team'));
+
+    els.toSetupBtn.addEventListener('click', () => {
+      if (!roster.length) return;
+      setScreen('setup');
+    });
+
+    els.teamSelect.addEventListener('change', async () => {
+      const team = teamsData.teams.find(t => t.id === els.teamSelect.value);
+      if (!team || team.id === activeTeam().id) return;
+      if (!(await resolveGameInProgress(`Switching to ${team.name} ends the current game. Save it to history first?`))) { renderAll(); return; }
+      state.historyGameId = null;
+      switchTeam(team.id);
+      els.teamNameInput.value = team.name;
+      setRosterMessage(`Switched to ${team.name}.`);
+      renderAll();
+    });
+
+    els.newTeamBtn.addEventListener('click', () => {
+      const name = cleanName(window.prompt('Name for the new team:', ''));
+      if (!name) return;
+      const team = makeTeam(name);
+      teamsData.teams.push(team);
+      switchTeam(team.id);
+      els.teamNameInput.value = name;
+      setRosterMessage(`${name} created. Choose its level and formation, then add players below.`);
+      renderAll();
+      els.levelGrid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    function renameTeam() {
+      const name = cleanName(els.teamNameInput.value);
+      if (!name) { setRosterMessage('Team name cannot be empty.', 'error'); return; }
+      activeTeam().name = name;
+      persistTeams();
+      setRosterMessage('Team name saved.');
+      renderAll();
+    }
+
+    els.renameTeamBtn.addEventListener('click', renameTeam);
+    els.teamNameInput.addEventListener('keydown', event => {
+      if (event.key === 'Enter') { event.preventDefault(); renameTeam(); }
+    });
+
+    els.bulkAddBtn.addEventListener('click', () => addPlayersBulk(els.bulkInput.value));
+
+    els.clearPlayersBtn.addEventListener('click', () => {
+      if (!roster.length) return;
+      if (!window.confirm(`Remove all ${roster.length} players from ${activeTeam().name}? The team name, level and formation stay so you can enter a new roster.`)) return;
+      roster = [];
+      saveRoster();
+      resetGameState();
+      setRosterMessage('All players removed. Start adding your new roster.');
+      renderAll();
+      els.newPlayerInput.focus();
+    });
+
+    els.deleteTeamBtn.addEventListener('click', () => {
+      const team = activeTeam();
+      const games = teamGames(team.id);
+      if (!window.confirm(`Delete the team "${team.name}", all of its players${games.length ? ` and its ${games.length} saved game${games.length === 1 ? '' : 's'}` : ''}?`)) return;
+      teamsData.teams = teamsData.teams.filter(t => t.id !== team.id);
+      if (!teamsData.teams.length) teamsData.teams.push(makeTeam('My Team'));
+      if (games.length) {
+        Store.deleteGames(games.map(g => g.id)).catch(reportSaveError);
+        gamesCache = gamesCache.filter(g => g.teamId !== team.id);
+      }
+      state.historyGameId = null;
+      switchTeam(teamsData.teams[0].id);
+      els.teamNameInput.value = activeTeam().name;
+      setRosterMessage(`${team.name} deleted.`);
+      renderAll();
+    });
+
+    els.deleteAllTeamsBtn.addEventListener('click', () => {
+      if (!window.confirm('Delete ALL teams, players and saved game history and start completely fresh?')) return;
+      const team = makeTeam('My Team');
+      teamsData = { activeId: team.id, teams: [team] };
+      gamesCache = [];
+      Store.replaceGames([]).catch(reportSaveError);
+      state.historyGameId = null;
+      switchTeam(team.id);
+      els.teamNameInput.value = 'My Team';
+      setRosterMessage('Everything cleared. Name your team, pick a level and add players.');
+      renderAll();
+      els.teamNameInput.focus();
+      els.teamNameInput.select();
+    });
+
+    els.addPlayerBtn.addEventListener('click', () => addPlayer(els.newPlayerInput.value));
+
+    els.newPlayerInput.addEventListener('keydown', event => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        addPlayer(els.newPlayerInput.value);
+      }
+    });
+
+    els.toLineupBtn.addEventListener('click', () => {
+      if (state.availablePlayers.size < 1) return;
+      Object.keys(state.lineupAssignments).forEach(key => {
+        const player = state.lineupAssignments[key];
+        if (player && !state.availablePlayers.has(player)) state.lineupAssignments[key] = null;
+      });
+      state.selectedLineupPlayer = null;
+      setScreen('lineup');
+    });
+
+    els.backToSetupBtn.addEventListener('click', () => setScreen('setup'));
+
+    els.startGameBtn.addEventListener('click', () => {
+      if (gameHasProgress()) { setScreen('game'); return; }
+      pauseClock();
+      buildBench();
+      state.pendingSubs = [];
+      state.history = [];
+      state.totalSwapsMade = 0;
+      state.seconds = 0;
+      state.clockAnchor = null;
+      state.period = 1;
+      clearGameSelections();
+      state.game = newGame();
+      setScreen('game');
+    });
+
+    els.backToLineupBtn.addEventListener('click', () => setScreen('lineup'));
+
+    els.clockToggleBtn.addEventListener('click', () => {
+      if (state.clockRunning) pauseClock(); else startClock();
+    });
+
+    els.periodBtn.addEventListener('click', () => {
+      if (!state.game) return;
+      const level = activeLevel();
+      pauseClock();
+      state.game.periods.push({ number: state.period, endSeconds: state.seconds });
+      showToast(`${level.periodName} ${state.period} over — press Start for ${level.periodName} ${state.period + 1}`);
+      state.period += 1;
+      renderAll();
+    });
+
+    els.endGameBtn.addEventListener('click', endGame);
+
+    els.historyBtn.addEventListener('click', () => { state.historyGameId = null; setScreen('history'); });
+    els.viewHistoryBtn.addEventListener('click', () => { state.historyGameId = null; setScreen('history'); });
+    els.historyBackToTeamBtn.addEventListener('click', () => setScreen('team'));
+    els.backupBtn.addEventListener('click', backUpAll);
+    els.shareTeamBtn.addEventListener('click', shareTeam);
+    els.restoreBtn.addEventListener('click', () => els.restoreInput.click());
+    els.restoreInput.addEventListener('change', () => {
+      const file = els.restoreInput.files && els.restoreInput.files[0];
+      els.restoreInput.value = '';
+      if (file) restoreFromFile(file);
+    });
+
+    els.clearSelectionBtn.addEventListener('click', () => {
+      clearGameSelections();
+      renderAll();
+    });
+
+    els.addSwapBtn.addEventListener('click', () => {
+      if (!state.selectedFieldPosition || !state.selectedBenchPlayer) return;
+      const position = positions.find(p => p.key === state.selectedFieldPosition);
+      const outgoing = state.lineupAssignments[position.key];
+      state.pendingSubs.push({
+        positionKey: position.key,
+        positionLabel: position.label,
+        outPlayer: outgoing,
+        inPlayer: state.selectedBenchPlayer
+      });
+      clearGameSelections();
+      renderAll();
+    });
+
+    els.clearPendingBtn.addEventListener('click', () => {
+      state.pendingSubs = [];
+      renderAll();
+    });
+
+    els.confirmSubsBtn.addEventListener('click', () => {
+      if (!state.pendingSubs.length) return;
+      const currentTime = formatTime(state.seconds);
+      state.pendingSubs.forEach(swap => {
+        state.lineupAssignments[swap.positionKey] = swap.inPlayer;
+        state.history.push({ ...swap, time: currentTime, seconds: state.seconds, period: state.period });
+        state.totalSwapsMade += 1;
+      });
+      state.pendingSubs = [];
+      clearGameSelections();
+      buildBench();
+      renderAll();
+    });
+
+    els.resetBtn.addEventListener('click', async () => {
+      if (gameHasProgress()) {
+        if (!(await resolveGameInProgress('Resetting clears the field and clock. Save this game to history first?'))) return;
+      } else if (!window.confirm('Reset the game and return to setup?')) {
+        return;
+      }
+      resetGameState();
+      setScreen('setup');
+    });
+
+    els.themeToggle.addEventListener('click', () => {
+      state.theme = state.theme === 'light' ? 'dark' : 'light';
+      renderTheme();
+    });
+
+    /* ---------- Installable app: offline support, install prompt, updates ---------- */
+    const APP_VERSION = '1.0.1';
+    document.getElementById('appVersion').textContent = `Soccer Sub Manager · version ${APP_VERSION}`;
+
+    const installEls = {
+      banner: document.getElementById('installBanner'),
+      text: document.getElementById('installText'),
+      button: document.getElementById('installBtn'),
+      dismiss: document.getElementById('installDismissBtn'),
+      updateBanner: document.getElementById('updateBanner'),
+      updateButton: document.getElementById('updateReloadBtn')
+    };
+    const isInstalled = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const isAppleTablet = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isHosted = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    let deferredInstallPrompt = null;
+
+    async function maybeShowInstallBanner(mode) {
+      if (isInstalled() || !isHosted) return;
+      let dismissedAt = null;
+      try { dismissedAt = await Store.get('installDismissedAt'); } catch (error) { /* ignore */ }
+      if (dismissedAt && Date.now() - dismissedAt < 7 * 86400000) return;
+      if (mode === 'prompt') {
+        installEls.text.textContent = 'Opens full screen, works offline at the field, and keeps your teams and game history on this device.';
+        installEls.button.hidden = false;
+      } else {
+        installEls.text.textContent = 'In Safari, tap the Share button (square with an arrow), then “Add to Home Screen”. It then opens full screen and works offline at the field.';
+        installEls.button.hidden = true;
+      }
+      installEls.banner.hidden = false;
+    }
+
+    window.addEventListener('beforeinstallprompt', event => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      maybeShowInstallBanner('prompt');
+    });
+    window.addEventListener('appinstalled', () => {
+      installEls.banner.hidden = true;
+      deferredInstallPrompt = null;
+      showToast('Sub Manager installed');
+    });
+    installEls.button.addEventListener('click', async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      try { await deferredInstallPrompt.userChoice; } catch (error) { /* ignore */ }
+      deferredInstallPrompt = null;
+      installEls.banner.hidden = true;
+    });
+    installEls.dismiss.addEventListener('click', () => {
+      installEls.banner.hidden = true;
+      Store.set('installDismissedAt', Date.now()).catch(() => {});
+    });
+    if (isAppleTablet) maybeShowInstallBanner('ios');
+
+    if ('serviceWorker' in navigator && isHosted) {
+      let refreshing = false;
+      let updateRequested = false;
+      // Reload only when the coach tapped "Update Now" (not when offline support first switches on).
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing || !updateRequested) return;
+        refreshing = true;
+        window.location.reload();
+      });
+      window.addEventListener('load', async () => {
+        try {
+          const registration = await navigator.serviceWorker.register('sw.js');
+          const offerUpdate = worker => {
+            installEls.updateBanner.hidden = false;
+            installEls.updateButton.onclick = () => {
+              saveActiveGameNow();
+              updateRequested = true;
+              worker.postMessage({ type: 'SKIP_WAITING' });
+            };
+          };
+          if (registration.waiting && navigator.serviceWorker.controller) offerUpdate(registration.waiting);
+          registration.addEventListener('updatefound', () => {
+            const worker = registration.installing;
+            if (!worker) return;
+            worker.addEventListener('statechange', () => {
+              if (worker.state === 'installed' && navigator.serviceWorker.controller) offerUpdate(worker);
+            });
+          });
+          // Check for a new version whenever the app comes back to the foreground.
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') registration.update().catch(() => {});
+          });
+        } catch (error) {
+          console.warn('Offline support unavailable', error);
+        }
+      });
+    }
+
+    /* ---------- Start-up: load from the database (migrating older saved teams the first time) ---------- */
+    async function boot() {
+      renderAll();
+      await Store.ready;
+      let savedActive = null;
+      try {
+        const savedTeams = normalizeTeamsData(await Store.get('teams'));
+        if (savedTeams) teamsData = savedTeams;
+        else await Store.set('teams', teamsData);
+        gamesCache = await Store.allGames();
+        lastBackupAt = (await Store.get('lastBackupAt')) || null;
+        savedActive = await Store.get('activeGame');
+      } catch (error) {
+        reportSaveError(error);
+      }
+      storageProtected = await requestProtectedStorage();
+      roster = activeTeam().players.slice();
+      positions = currentPositions();
+      resetGameState();
+      if (savedActive && restoreActiveGame(savedActive)) {
+        setScreen('game');
+        showToast('Picked up your game in progress');
+      } else {
+        renderAll();
+      }
+    }
+
+    boot();
+  </script>
+</body>
+</html>
