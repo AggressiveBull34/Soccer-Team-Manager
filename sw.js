@@ -1,6 +1,6 @@
 /* Soccer Sub Manager — offline support.
    Bump VERSION whenever you upload a new build so coaches get the "new version" banner. */
-const VERSION = '1.0.1';
+const VERSION = '1.0.2';
 const APP_CACHE = `ssm-app-${VERSION}`;
 const FONT_CACHE = 'ssm-fonts';
 
